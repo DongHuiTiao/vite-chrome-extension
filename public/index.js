@@ -5,3 +5,10 @@ script.type = 'module';
 // eslint-disable-next-line no-undef
 script.src = chrome.extension.getURL('/assets/index.dht.js');
 document.body.appendChild(script);
+
+// eslint-disable-next-line no-undef
+// chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+// 	console.log(request.info);
+// 	// 这里是返回给bg的内容
+// 	sendResponse('get the message');
+// });

@@ -1,5 +1,5 @@
 <template>
-	<div class="entry">
+	<div>
 		<button @click="start">我在这里，这里是入口，快点我试试！</button>
 	</div>
 </template>
@@ -12,11 +12,3 @@ const start = () => {
 	// TODO 实现自动更新？
 };
 </script>
-
-<style scoped>
-.entry {
-	position: fixed;
-	left: 0;
-	top: 50%;
-}
-</style>
