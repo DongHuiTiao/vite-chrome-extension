@@ -5,3 +5,16 @@ script.type = 'module';
 // eslint-disable-next-line no-undef
 script.src = chrome.extension.getURL('/assets/index.dht.js');
 document.body.appendChild(script);
+
+const loadStyle = url => {
+	const link = document.createElement('link');
+	link.type = 'text/css';
+	link.rel = 'stylesheet';
+	// eslint-disable-next-line no-undef
+	link.href = chrome.extension.getURL(url);
+	const head = document.getElementsByTagName('head')[0];
+	head.appendChild(link);
+};
+
+loadStyle('/assets/index.dht.css');
+loadStyle('/assets/index.dht2.css');

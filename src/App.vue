@@ -1,22 +1,31 @@
 <template>
 	<div class="entry">
-		<button @click="start">我在这里，这里是入口，快点我试试！</button>
+		<FansList />
 	</div>
 </template>
 
 <script setup>
-const start = () => {
-	alert('从现在开始，你可以享受 vite vue3 的制作插件之旅了');
-	alert('冬灰条牛逼！');
-	// TODO 在目标页面实现热更新？
-	// TODO 实现自动更新？
-};
+import FansList from './views/fans-list.vue';
 </script>
 
-<style scoped>
+<style>
 .entry {
 	position: fixed;
-	left: 0;
+	right: 0;
 	top: 50%;
+}
+.flex {
+	display: flex;
+}
+.justify-between {
+	justify-content: space-between;
+}
+.align-center {
+	align-items: center;
+}
+.flex-center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 </style>

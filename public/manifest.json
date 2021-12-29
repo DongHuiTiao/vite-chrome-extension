@@ -4,19 +4,21 @@
     "manifest_version": 2,
     "description": "用于测试",
     "permissions": [
-        "https://www.baidu.com/*"
+        "https://member.bilibili.com/*"
     ],
     "browser_action": {
         "default_popup": "index.html"
     },
 	"content_scripts": [
 		{
-			"matches": ["<all_urls>"],
+			"matches": ["https://member.bilibili.com/*"],
 			"js": ["index.js"]
 		}
 	],
     "web_accessible_resources": [
         "/assets/index.dht.js",
-        "/assets/vendor.511a2199.js"
+        "/assets/chunk.dht.js",
+        "/assets/index.dht.css",
+        "/assets/index.dht2.css"
     ]
 }
