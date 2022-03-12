@@ -1,11 +1,11 @@
 <template>
 	<div class="entry">
-		<FansList />
+		<GuguPage />
 	</div>
 </template>
 
 <script setup>
-import FansList from './views/fans-list.vue';
+import GuguPage from './views/gugu-page.vue';
 </script>
 
 <style>

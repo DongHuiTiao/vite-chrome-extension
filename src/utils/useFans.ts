@@ -1,22 +1,41 @@
-import { sleep } from './common'; 
+import { sleep, getZodiac, getConstellation } from './common'; 
 import { fansApi } from './api/fans'
 import { ref, computed, watch } from 'vue';
-
-// 获取一组粉丝数据的方法
+// import { useRequest } from './useRequest';
+// 获取一组观众数据的方法
 const { getOneGroupFansInfo } = fansApi();
-
+// const { addRequstHandle } = useRequest();
 const initFans = () => {
-    // 总粉丝量
+    // 总观众量
     const allFansLength = ref<number>(1);
-    // 当前获取的粉丝的数组
+    // 当前获取的观众的数组
     const allFansInfo = ref([]);
-    // 当前获取的粉丝的数量
+    // 星座统计数据
+    const constellationDataRate = computed(() => {
+        const jsonData =  allFansInfo.value.reduce((result, current) => {
+            const { constellation } = current;
+            if (result[constellation]) {
+                result[constellation]++ ;
+            } else {
+                result[constellation] = 1;
+            }
+            return result
+        }, {});
+        delete jsonData[''];
+        return Object.keys(jsonData).map(item => {
+            return {
+                name: item,
+                value: jsonData[item]
+            }
+        })
+    })
+    // 当前获取的观众的数量
     const currentGetFansLength = computed(()=>allFansInfo.value.length);
     // 当前是否全部获取完毕
     const isComplete = ref(false);
     // 预计时间
     const estimatedTime = computed(() => {
-        // 剩余的粉丝长度
+        // 剩余的观众长度
         const remainLength = allFansLength.value - currentGetFansLength.value;
         // 剩余的获取次数
         const remainTime = Math.ceil(remainLength / 500);
@@ -36,9 +55,9 @@ const initFans = () => {
             showRemainTime.value --;
         }, 1000);
     }
-    // 上一组中最后一个粉丝的 id
+    // 上一组中最后一个观众的 id
     let tempLastId = '';
-    // 当前是否暂停请求所有粉丝
+    // 当前是否暂停请求所有观众
     const isPause = ref(false);
     // 暂停获取
     const pause = () => {
@@ -48,16 +67,17 @@ const initFans = () => {
     const progress = computed(()=>{
         return Math.floor((allFansInfo.value.length / allFansLength.value) * 100);
     })
-    // 获取所有粉丝数据的方法
+    // TODO 参考的方案，根据当前返回的 my_followr 判断是否加载第一页的观众（by 我不知道啊啊真是的六 2022.1.1）
+    // 获取所有观众数据的方法
     const getAllFansInfo = async () => {
         // 把暂停状态改成 false
         isPause.value = false;
         isComplete.value = false;
-        // 上一组粉丝的信息
+        // 上一组观众的信息
         let lastGroupFansInfo = [];
         // 启动预计时间流动
         const timer = startRunRemainTime();
-        // 如果当前获取的粉丝数量，大于等于所有粉丝数量
+        // 如果当前获取的观众数量，大于等于所有观众数量
         // 或 返回的 result 为 0
         while (
             allFansInfo.value.length < allFansLength.value ||
@@ -66,17 +86,26 @@ const initFans = () => {
             // 如果需要暂停的话，就跳出循环
             if (isPause.value) break;
             try {
-                const res = await getOneGroupFansInfo(tempLastId);
+                // TODO 研究一下 continue 和 break 如何处理
+                // addRequstHandle(async ()=>{
+                const { data: {result, my_follower}, code } = await getOneGroupFansInfo(tempLastId);
                 // 如果请求失败，则继续请求
-                if(res.code === 20002) {
+                if(code === 20002) {
                     await sleep(667);
                     continue;
                 }
-                lastGroupFansInfo = res.data.result;
+                lastGroupFansInfo = result;
+
+                result.forEach(element => {
+                    element.zodiac = getZodiac(element.card.birthday);
+                    element.constellation = getConstellation(element.card.birthday);
+                });
+
                 if(!lastGroupFansInfo.length) break;
-                allFansLength.value = res.data.my_follower;
+                allFansLength.value = my_follower;
                 tempLastId = lastGroupFansInfo[lastGroupFansInfo.length - 1].mtime_id;
                 allFansInfo.value = allFansInfo.value.concat(lastGroupFansInfo);
+                // })
                 await sleep(3000);
             } catch (error) {
                 await sleep(3000);
@@ -143,7 +172,7 @@ const initFans = () => {
         qualifiedNum.value = result.length;
         if(!sortBy.value) return result;
         result.sort((a, b) => {
-            // 如果选择了按粉丝数排序
+            // 如果选择了按观众数排序
             if(sortBy.value === 'fans') return b.follower - a.follower;
             // 如果选择了按关注时间排序
             if(sortBy.value === 'followTime') return new Date(a.mtime).getTime() - new Date(b.mtime).getTime();
@@ -159,6 +188,29 @@ const initFans = () => {
     const refreshShowFansList = () => {
         showFilterResult.value = filterResult.value.slice(0, showResultNum.value);
     };
+
+    /**
+     * 用于计算某个时间区间内增长了多少关注
+     * @param timeRange [start, end]
+     */
+    const getTimeRangeGrowFansLength = (timeRange: [number, number]) => {
+        // 最终观众数量
+        let result = 0;
+        // 获取起始时间 和 结束时间
+        const [start, end] = timeRange;
+        for ( let { mtime } of allFansInfo.value) {
+            // 观众的关注时间的时间戳
+            const fansFollowTime = new Date(mtime).getTime();
+
+            // 如果关注时间 迟于 结束时间，则继续往下查找
+            if (fansFollowTime > end) continue;
+            // 如果关注时间 早于 开始时间，则停止循环
+            if (fansFollowTime < start) break;
+            // 观众数量增加 1
+            result++;
+        }
+        return result;
+    }
 
     return {
         pause,
@@ -177,7 +229,9 @@ const initFans = () => {
         isComplete,
         getAllFansInfo,
         refreshShowFansList,
-        showFilterResult
+        getTimeRangeGrowFansLength,
+        showFilterResult,
+        constellationDataRate
     }
 }
 

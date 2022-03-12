@@ -7,11 +7,9 @@
 			<!-- 头像昵称（可以进入用户页） -->
 			<div class="user-fans-list_name">头像昵称</div>
 			<!-- 性别（可以筛选） -->
-			<div class="user-fans-list_sex">
-				<div style="width: 90px">性别</div>
-			</div>
-			<!-- 粉丝数（可以排序） -->
-			<div class="user-fans-list_fans">粉丝数</div>
+			<div class="user-fans-list_sex">性别</div>
+			<!-- 观众数（可以排序） -->
+			<div class="user-fans-list_fans">观众数</div>
 			<!-- TODO 增加排序 -->
 			<div class="user-fans-list_mtime">
 				<div>关注时间</div>
@@ -46,7 +44,7 @@
 				<div class="user-fans-list_sex">
 					{{ fan.card.sex }}
 				</div>
-				<!-- 粉丝数（可以排序） -->
+				<!-- 观众数（可以排序） -->
 				<div class="user-fans-list_fans">
 					{{ fan.follower }}
 				</div>
@@ -57,6 +55,8 @@
 				<!-- 生日时间（可以挑选） -->
 				<div class="user-fans-list_birthday">
 					{{ formatBirthday(fan.card.birthday) }}
+					{{ fan.zodiac }}
+					{{ fan.constellation }}
 				</div>
 				<!-- 是否互粉（可以设置） -->
 				<div class="user-fans-list_is-each-other">

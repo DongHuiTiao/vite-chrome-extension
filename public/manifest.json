@@ -1,17 +1,17 @@
 {
-    "name": "test",
+    "name": "up-gugu-list",
     "version": "1.0.0",
     "manifest_version": 2,
-    "description": "用于测试",
+    "description": "获取 up 主的咕咕信息",
     "permissions": [
-        "https://member.bilibili.com/*"
+        "https://space.bilibili.com/*"
     ],
     "browser_action": {
         "default_popup": "index.html"
     },
 	"content_scripts": [
 		{
-			"matches": ["https://member.bilibili.com/*"],
+			"matches": ["https://space.bilibili.com/*"],
 			"js": ["index.js"]
 		}
 	],

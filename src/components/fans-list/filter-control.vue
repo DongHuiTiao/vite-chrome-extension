@@ -7,11 +7,17 @@
 		</div>
 		<div v-else>全部获取完毕</div>
 		<!-- 进度条 -->
-		<el-progress :text-inside="true" :stroke-width="26" :percentage="progress" stroke-linecap="square" />
+		<el-progress
+			v-if="!isComplete"
+			:text-inside="true"
+			:stroke-width="26"
+			:percentage="progress"
+			stroke-linecap="square"
+		/>
 		<!-- 预计全部完成时间 -->
 		<div class="flex justify-between">
 			<!-- 根据还需要剩余成功请求几次，计算预计时间 -->
-			<div v-if="isComplete">预计 {{ remainTime }} 后全部完成</div>
+			<div v-if="!isComplete">预计 {{ remainTime }} 后全部完成</div>
 			<!-- 已经获取到的数量 -->
 			<div>已获取{{ currentGetFansLength }}个用户信息</div>
 		</div>
@@ -23,8 +29,8 @@
 		<el-divider>排序方式</el-divider>
 		<div>
 			<el-radio v-model="sortBy" label="" @change="refreshShowFansList">不排序</el-radio>
-			<!-- 按粉丝数排序 -->
-			<el-radio v-model="sortBy" label="fans" @change="refreshShowFansList">按粉丝数排序</el-radio>
+			<!-- 按观众数排序 -->
+			<el-radio v-model="sortBy" label="fans" @change="refreshShowFansList">按观众数排序</el-radio>
 			<!-- 按关注时间排序 -->
 			<el-radio v-model="sortBy" label="followTime" @change="refreshShowFansList">按关注时间排序</el-radio>
 		</div>
@@ -66,7 +72,7 @@
 				>
 				</el-date-picker>
 			</div>
-			<div class="margin-bottom">
+			<div v-if="isComplete" class="margin-bottom">
 				<el-button size="mini" @click="isShowVideoFollowerData = true">查看每期视频增长关注</el-button>
 			</div>
 			<!-- 抽屉 -->
@@ -80,6 +86,21 @@
 				:append-to-body="true"
 			>
 				<VideoFollowerData :video-list="videoList" />
+			</el-drawer>
+			<div class="margin-bottom">
+				<el-button size="mini" @click="isShowConstellation = true">查看星座比例</el-button>
+			</div>
+			<!-- 抽屉 -->
+			<el-drawer
+				:model-value="isShowConstellation"
+				direction="rtl"
+				size="80%"
+				:with-header="false"
+				:before-close="handleCloseShowConstellation"
+				:modal-append-to-body="false"
+				:append-to-body="true"
+			>
+				<ConstellationList />
 			</el-drawer>
 			<!-- 按是否互粉筛选 -->
 			<div class="flex align-center">
@@ -99,7 +120,7 @@
 import { ref, onBeforeMount, computed } from 'vue';
 import { useFans, useVideo, useUp } from '../../utils/index';
 import VideoFollowerData from './../video-list/video-follower-data.vue';
-
+import ConstellationList from '../constellation-list/constellation-list.vue';
 const {
 	progress,
 	currentGetFansLength,
@@ -169,6 +190,13 @@ const isShowVideoFollowerData = ref(false);
 // 关闭这个窗口的回调函数
 const handleCloseShowVideoFollowerData = () => {
 	isShowVideoFollowerData.value = false;
+};
+
+// 是否展示每一期视频的涨关注量
+const isShowConstellation = ref(false);
+// 关闭这个窗口的回调函数
+const handleCloseShowConstellation = () => {
+	isShowConstellation.value = false;
 };
 </script>
 

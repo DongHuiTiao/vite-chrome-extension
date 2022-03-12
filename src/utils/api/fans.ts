@@ -3,7 +3,7 @@ import { useFetch } from '../common';
 const { jsonFetch } = useFetch();
 
 export const fansApi = () => {
-    // 获取一组粉丝数据的方法
+    // 获取一组观众数据的方法
     const getOneGroupFansInfo = async (lastId?) => {
         return jsonFetch(
             lastId ? 
