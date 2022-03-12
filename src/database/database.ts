@@ -1,14 +1,11 @@
 import localforage from 'localforage';
+import { IDatabase, LocalStore } from './type';
 
-export class Database {
+export class Database implements IDatabase {
     localStore: LocalStore<LocalForage> = {
-        followsStore: null,
+        followsIdList: null,
         guguStore: null,
         videosListStore: null,
-    }
-
-    constructor() {
-
     }
 
     async connect() {
