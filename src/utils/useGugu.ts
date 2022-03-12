@@ -30,12 +30,10 @@ interface GuguTimeInfo {
 export const useUpList = () => {
     // 定义 up 主咕咕列表信息
     const followsVideoList = [];
-    const followsGuguTimeList = ref<{[key: string]: GuguTimeInfo[]}>({});
     const followsGuguList = ref<UpGugu[]>([]);
 
 
-    const myVideoList = [];
-    const myGuguTimeList = ref<GuguTimeInfo[]>();
+    const myGuguList = ref<GuguTimeInfo[]>();
     const myGugu = ref<UpGugu>({
         mid: 0, 
         uname: '',
@@ -88,30 +86,34 @@ export const useUpList = () => {
     }
     // 处理个人的数据
     const processMyData = async () => {
-        // 获得个人咕咕数据
-        let isPersistent = false;
-        localStore.myGuguStore.iterate(guguData => {
-            myGugu.value = guguData as UpGugu;
-            isPersistent = true;
-        });
-        // 如果本地有个人视频数据，加载到前端
-        localStore.myVideoListStore.iterate(videoList => {
-            myVideoList.push(...(videoList as VideoInfo[]));
-        });
+        const myVideoList = [];
+        const myMid = getMyMid();
+        await Promise.all([
+            // 获得个人咕咕数据
+            localStore.guguStore.getItem(myMid).then(guguData => {
+                if (!guguData) return;
+                myGugu.value = guguData as UpGugu;
+            }),
+            // 如果本地有个人视频数据，加载到前端
+            localStore.videosListStore.getItem(myMid).then(videoList => {
+                if (!videoList) return;
+                myVideoList.push(...(videoList as VideoInfo[]));
+            })
+        ])
 
-        let myMid = myGugu.value.mid;
-        if (!myMid) {
-            myMid = Number(getMyMid());
+        // 本地没有个人数据
+        if (myGugu.value.mid === 0) {
+            myGugu.value.mid = Number(getMyMid());
         }
         // 获取 我的 视频长度
-        const myVideoLength = await getUpVideoNum(myMid);
-
-        let newVideoList = [];
+        const myVideoLength = await getUpVideoNum(myGugu.value.mid);
 
         // 判断是否继续运行后面的代码
-        const isContinue = () => {};
+        const isContinue = await geiIsContinue();
 
         if (!isContinue) return;
+
+        let newVideoList = [];
 
         while() {
             
@@ -119,13 +121,11 @@ export const useUpList = () => {
             // 和本地第一个视频做对比，
             
         }
-
-        if (newVideoList.length > 0) {
-            myVideoList.unshift(...newVideoList);
-        }
         // 当本地有数据，且 newVideoList 的长度为 0 的时候，不运行下面的语句
         if (isPersistent && newVideoList.length === 0) return;
 
+        myVideoList.unshift(...newVideoList);
+        
         myGuguTimeList.value = formatVideosListToGuguTimeList(myVideoList);
         const guguDetails = getGuguDetails(myVideoList, myGuguTimeList.value);
         // 更新 我的 咕咕数据
@@ -180,6 +180,19 @@ export const useUpList = () => {
             averageGuguLength,
             maxGuguLength
         }
+    }
+
+    const geiIsContinue = async () => {
+        const isContinue = false;
+        if ()
+        // 获得我的第一个视频数据
+        const vlist = await getOneGroupUpVideoInfo(myGugu.value.mid, 1, 1);
+        
+        if (vlist.length === 0) return isContinue;
+
+
+
+        return isContinue;
     }
 
 // -------------------------------------------------------------
