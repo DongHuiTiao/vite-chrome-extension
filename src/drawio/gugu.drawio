@@ -1,11 +1,11 @@
 <mxfile host="65bd71144e">
     <diagram id="uoOaNix7MGn-KlGbG-9v" name="第 1 页">
-        <mxGraphModel dx="1786" dy="1650" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+        <mxGraphModel dx="3556" dy="2500" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
                 <mxCell id="77" value="获取关注的 up 主的 gugu 信息" style="swimlane;" parent="1" vertex="1">
-                    <mxGeometry x="146" y="-136" width="796" height="740" as="geometry"/>
+                    <mxGeometry x="138" y="-136" width="796" height="740" as="geometry"/>
                 </mxCell>
                 <mxCell id="117" value="参数" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="77" vertex="1">
                     <mxGeometry x="326.5" y="50" width="140" height="60" as="geometry"/>
@@ -101,6 +101,11 @@
                 </mxCell>
                 <mxCell id="254" value="" style="edgeStyle=none;html=1;" edge="1" parent="77" source="246" target="248">
                     <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="256" value="是" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="254">
+                    <mxGeometry x="0.4022" y="3" relative="1" as="geometry">
+                        <mxPoint x="-22" y="1" as="offset"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="246" value="是否 有差量" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="77">
                     <mxGeometry x="38.38" y="349" width="164" height="80" as="geometry"/>

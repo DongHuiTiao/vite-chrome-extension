@@ -1,4 +1,4 @@
-import { IRequestQueue, PromiseConfig } from "./type";
+import { GetPromise, IRequestQueue, PromiseConfig } from "./type";
 import { sleep } from './../utils/common';
 const Delay = 667
 
@@ -12,11 +12,26 @@ export class RequestQueue implements IRequestQueue {
 		}
     }
 
+	async reaquest<T>(getPromise: GetPromise<T>): Promise<T> {
+		let done = null;
+
+		const lisnter: Promise<T> = new Promise(resolve => {
+			done = resolve;
+		});
+
+		this.add({
+			getPromise,
+			done,
+		});
+
+		return lisnter;
+	}
+
     async getNextPromise() {
         const promiseConfig = this.queue[0];
-		const { promise, done } = promiseConfig;
+		const { getPromise, done } = promiseConfig;
 		try {
-			const data = await promise();
+			const data = await getPromise();
 			done(data);
 
 			this.queue.shift();

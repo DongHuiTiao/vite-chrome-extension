@@ -1,40 +1,28 @@
-import { ref } from 'vue';
+import { Ref, ref } from 'vue';
 import { 
     getOneGroupFollows,
     getUpVideoNum,
     getOneGroupUpVideoInfo,
     getMyInfo,
+    UpInfo,
 } from './api/up';
-import { deepClone, getMyMid, sleep } from './common';
-import { VideoInfo } from './type';
-// import {useLocalCollection } from './useLocalCollection';
-import { useDB } from './useDB';
-const { initDB, localStore } = useDB();
+import databaseFactory from './../database/index';
+import requestQueueFactory from './../request-queue/index'; 
+import { deepClone, getMyMid } from './common';
+import { VideoInfo, UpGugu, GuguLength } from './type';
 
-interface UpGugu {
-    mid: number;
-    uname: string;
-    face: string;
-    currentGuguLength?: number;
-    averageGuguLength?: number;
-    maxGuguLength?: number;
-    videoNum: number;
-    currentHaveVideoNum: number;
-}
+const Database = databaseFactory();
+const RequestQueue = requestQueueFactory();
 
-interface GuguTimeInfo {
-    bvid: string;
-    guguTime: number;
-}
+export const useGugu = () => {
+    // 获取当前 b 站用户 的 登录 mid
+    const myMid = getMyMid();
 
-export const useUpList = () => {
-    // 定义 up 主咕咕列表信息
-    const followsVideoList = [];
-    const followsGuguList = ref<UpGugu[]>([]);
+    // 我关注的 up 的咕咕列表信息
+    const followsGuguList: Ref<UpGugu[]> = ref<UpGugu[]>([]);
 
-
-    const myGuguList = ref<GuguTimeInfo[]>();
-    const myGugu = ref<UpGugu>({
+    // 我自己的咕咕信息
+    const myGugu: Ref<UpGugu> = ref<UpGugu>({
         mid: 0, 
         uname: '',
         face: '',
@@ -43,323 +31,276 @@ export const useUpList = () => {
         maxGuguLength:undefined,
         videoNum: 0,
         currentHaveVideoNum: -1,
+        guguLengthList: [],
     })
+
     let isInit = false;
+
+    // 初始化方法
+    const init = async () => {
+        // 只初始化一次
+        if (isInit) return;
+        isInit = true;
+
+        // 连接 本地 数据库
+        await Database.connect();
+
+        // 获取关注的 up 主的 咕咕信息
+        getFollowsGuguList();
+        getMyGugu();
+    }
+
+    // 获取我的 gugu 数据
     const getMyGugu = async () => {
-        const myInfo = await getMyInfo();
+        const myInfo = await getMyInfo(myMid);
         const { mid, name: uname, face } = myInfo;
         Object.assign(myGugu.value, {
             mid, 
             uname,
-            face,
-            videoNum: 0,
-            currentHaveVideoNum: -1,
-        })
-        // 获取我的视频信息
-        const lengthData = await getGuguLength(myGugu.value);
-        Object.assign(myGugu.value, {
-            ...lengthData,
+            face
         });
-        localStore.myGuguStore.setItem('myInfo', deepClone(myGugu.value));
+        handleOneGugu(Number(myMid), myGugu.value);
     };
 
-    const init = async () => {
-        if (isInit) return;
-        isInit = true;
-        // 请求本地数据库
-        console.log('开始初始化本地数据库')
-        await initDB();
-        // 开始获取个人的咕咕数据
-        Promise.all([
-            processMyData,
-            processFollowsData,
-        ])
-
-        await getMyGugu();
-        // 先获取 up 主的 id 列表
-        await initUpGuguList();
-        // 循环获取 up 视频数据
-        for(let up of upGuguList.value) {
-            await sleep(667);
-            await updateGuguLength(up);
-        }
-    }
-    // 处理个人的数据
-    const processMyData = async () => {
-        const myVideoList = [];
-        const myMid = getMyMid();
-        await Promise.all([
-            // 获得个人咕咕数据
-            localStore.guguStore.getItem(myMid).then(guguData => {
-                if (!guguData) return;
-                myGugu.value = guguData as UpGugu;
-            }),
-            // 如果本地有个人视频数据，加载到前端
-            localStore.videosListStore.getItem(myMid).then(videoList => {
-                if (!videoList) return;
-                myVideoList.push(...(videoList as VideoInfo[]));
-            })
-        ])
-
-        // 本地没有个人数据
-        if (myGugu.value.mid === 0) {
-            myGugu.value.mid = Number(getMyMid());
-        }
-        // 获取 我的 视频长度
-        const myVideoLength = await getUpVideoNum(myGugu.value.mid);
-
-        // 判断是否继续运行后面的代码
-        const isContinue = await geiIsContinue();
-
-        if (!isContinue) return;
-
-        let newVideoList = [];
-
-        while() {
-            
-            // 获取第一批视频的时候，拿到第一个视频
-            // 和本地第一个视频做对比，
-            
-        }
-        // 当本地有数据，且 newVideoList 的长度为 0 的时候，不运行下面的语句
-        if (isPersistent && newVideoList.length === 0) return;
-
-        myVideoList.unshift(...newVideoList);
-        
-        myGuguTimeList.value = formatVideosListToGuguTimeList(myVideoList);
-        const guguDetails = getGuguDetails(myVideoList, myGuguTimeList.value);
-        // 更新 我的 咕咕数据
-        Object.assign(myGugu.value, {
-            ...guguDetails,
-        });
-    }
-    // 处理关注列表的数据
-    const processFollowsData = () => {
-
-    }
-
-    const formatVideosListToGuguTimeList = (videoList: VideoInfo[]): GuguTimeInfo[] => {
-        return videoList.map((video, index, arr) => {
-            const { bvid, created } = video;
-            // 定义 咕咕 的起始时间，默认是当前发布时间
-            let start = created;
-            // 咕咕 结束时间是当前视频发布时间
-            const end = created;
-            // 如果不是最后一个视频
-            if (index !== arr.length - 1) {
-                // 咕咕 起始时间是上一期视频发布时间
-                start = arr[index + 1].created;
-            }
-            return {
-                bvid,
-                guguTime: end - start,
-            };
-        });
-    }
-    // 获取 up 咕咕三个数据
-    const getGuguDetails = async (videoList: VideoInfo[], guguTimeList: GuguTimeInfo[]) => {
-        const myVideoLength = videoList.length;
-        // 计算三个数据 （第一次更新的时间，最后一次更新的时间，所有咕咕时间 ）
-        const firstUploadTime = videoList[myVideoLength -1].created;
-        const lastUploadTime = videoList[0].created;
-        // 如果该 up 无视频 则拦截
-        // 获取 最新咕咕时间
-        const currentGuguLength = getCurrentGuguLength(lastUploadTime);
-        // 获取 平均跟新频率
-        const averageGuguLength = getAverageGuguLength(
-            firstUploadTime,
-            myVideoLength
-        );
-        // 获取 最大咕咕时间
-        const maxGuguLength = getMaxGuguLength(
-            guguTimeList,
-            currentGuguLength
-        );
-        return {
-            currentGuguLength,
-            averageGuguLength,
-            maxGuguLength
-        }
-    }
-
-    const geiIsContinue = async () => {
-        const isContinue = false;
-        if ()
-        // 获得我的第一个视频数据
-        const vlist = await getOneGroupUpVideoInfo(myGugu.value.mid, 1, 1);
-        
-        if (vlist.length === 0) return isContinue;
-
-
-
-        return isContinue;
-    }
-
-// -------------------------------------------------------------
-    // 获得 初始发布时间，最后发布时间，和每个视频之间的间隔
-    const getGuguTime = async (videoList: VideoInfo[]) => {
-        let firstUploadTime: number;
-        let lastUploadTime: number;
-        const videoLazyLengthList: VideoLazyInfo[] = videoList.map((video, index, arr) => {
-            const { bvid, created } = video;
-            // 定义 咕咕 的起始时间，默认是当前发布时间
-            let start = created;
-            // 咕咕 结束时间是当前视频发布时间
-            const end = created;
-            // 如果是第一期视频
-            if (!index) {
-                lastUploadTime = end;
-            }
-            // 如果不是最后一个视频
-            if (index !== arr.length - 1) {
-                // 咕咕 起始时间是上一期视频发布时间
-                start = arr[index + 1].created;
-            }
-            // 如果是最后一个视频
-            else {
-                firstUploadTime = start;
-            }
-            return {
-                bvid,
-                lazyValue: end - start,
-            };
-        });
-        if (videoLazyLengthList.length === 1) firstUploadTime = lastUploadTime;
-        return {
-            // 第一次更新时间
-            firstUploadTime,
-            // 最后一次更新时间
-            lastUploadTime,
-            // 所有更新时间
-            videoLazyLengthList,
-        };
-    };
-    // 获取 up 咕咕三个数据
-    const getGuguLength = async (up: UpGugu) => {
-        // 先获取所有视频
-        const videoList = await getUpAllVideosInfo(up);
-        up.videoList = videoList;
-        // 如果 没有视频，则返回
-        if (!videoList.length) return;
-        // 计算三个数据 （第一次更新的时间，最后一次更新的时间，所有咕咕时间 ）
-        const { firstUploadTime, lastUploadTime, videoLazyLengthList } = await getGuguTime(videoList);
-        // 如果该 up 无视频 则拦截
-        if (!videoLazyLengthList.length) return;
-        // 获取 最新咕咕时间
-        const currentGuguLength = getCurrentGuguLength(lastUploadTime);
-        // 获取 平均跟新频率
-        const averageGuguLength = getAverageGuguLength(
-            firstUploadTime,
-            videoLazyLengthList.length
-        );
-        // 获取 最大咕咕时间
-        const maxGuguLength = getMaxGuguLength(
-            videoLazyLengthList,
-            currentGuguLength
-        );
-        return {
-            currentGuguLength,
-            averageGuguLength,
-            maxGuguLength
-        }
-    }
-    // 更新 up 咕咕列表的三个数据
-    const updateGuguLength = async (up: UpGugu) => {
-        const {
-            currentGuguLength,
-            averageGuguLength,
-            maxGuguLength
-        } = await getGuguLength(up);
-        // 更新 guguList
-        return upGuguList.value.find((currentUp) => {
-            if(currentUp.mid === up.mid) {
-                Object.assign(currentUp, {
-                    currentGuguLength,
-                    averageGuguLength,
-                    maxGuguLength,
-                });
-                // 存数据到本地数据库
-                localStore.upGuguStore.setItem(`${up.mid}`, deepClone(currentUp)).then(value => {
-                    console.log('存入了一条up主的信息', value);
-                    console.log('当前的 dataStore');
-                });
-            }
-            return currentUp.mid === up.mid
-        })
-    }
-    // 初始化 咕咕 列表
-    const initUpGuguList = async () => {
+    // 获得我关注的 up 的 头像 昵称 Id
+    const getAllFollowsInfoList = async (): Promise<UpInfo[]> => {
+        const followsInfoList = [];
         // 每次获取到的列表的长度
         let resultLength = -1;
         // 当前的页面
         let currentPage = 1;
         // 开始不断地获取 up 主列表
         while (resultLength !== 0) {
-            const followsList = await getOneGroupFollows(8212729, currentPage);
-            // 提取出请求到的值地结果
-            const result = followsList.map(({mid, uname, face}) => {
-                const upInfo = {
-                    mid, 
-                    uname,
-                    face,
-                    currentGuguLength: undefined,
-                    averageGuguLength: undefined,
-                    maxGuguLength: undefined,
-                    videoNum: 0,
-                    currentHaveVideoNum: -1,
-                    videoList: [],
-                }
-                return upInfo;
-            });
-            // 把结果塞到 up主 总列表中
-            upGuguList.value.push(...result);
-            resultLength = result.length;
-            currentPage += 1;
-            // 延迟 0.67秒，因为请求太频繁会被封 IP
-            await sleep(667);
-        }
-        // 把这次获取到的 up 主都塞本地 followUpListStore 表里
-        await Promise.all(upGuguList.value.map(upInfo => {
-            return localStore.followUpListStore.setItem(
-                String(upInfo.mid),
-                deepClone(upInfo),
+            const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
+                () => getOneGroupFollows(Number(myMid), currentPage)
             )
-        }))
+            followsInfoList.push(...oneGroupFollowsInfo);
+        }
+        return followsInfoList;
     }
+
+    // 计算关注 up 列表的差量
+    const getFollowsInfoListDiff = async (followsInfoList: UpInfo[]) => {
+        const followsIdList = followsInfoList.map(upInfo => upInfo.mid);
+        let isChange = false;
+        // 每次获取到的列表的长度
+        let resultLength = -1;
+        // 当前的页面
+        let currentPage = 1;
+        let newFollowsInfoList = [];
+        do {
+            const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
+                () => getOneGroupFollows(Number(myMid), currentPage)
+            );
+
+            resultLength = oneGroupFollowsInfo.length;
+
+            currentPage += 1;
+
+            newFollowsInfoList = oneGroupFollowsInfo.filter(upInfo => {
+                return !followsIdList.includes(upInfo.mid);
+            });
+
+            // 如果有新关注
+            if(newFollowsInfoList.length > 0) {
+                followsInfoList.unshift(...newFollowsInfoList);
+                isChange = true;
+            }
+        } while (resultLength !==0 && newFollowsInfoList.length > 0 );
+
+        return {
+            followsInfoList,
+            isChange
+        }
+    }
+
+    // 获取我关注的 up 的 gugu 列表
+    const getFollowsGuguList = async () => {
+        // 查看本地的 followsIdList 是否为空
+        let followsInfoList: UpInfo[] = await Database.localStore.followsInfoList.getItem(myMid)
+
+        if (!followsInfoList) {
+            // 请求全部 follows
+            followsInfoList = await getAllFollowsInfoList();
+        }
+        else {
+            // 计算 followsIdList 差量
+            const {
+                followsInfoList: afterDiffList, 
+                isChange
+            } = await getFollowsInfoListDiff(followsInfoList);
+
+            if(isChange) {
+                followsInfoList = afterDiffList;
+            }
+        }
+        // 更新本地数据
+        await Database.localStore.followsInfoList.setItem(myMid, followsInfoList);
+
+        // 初始化 followsGuguList
+        followsGuguList.value = followsInfoList.map(upInfo => {
+            return {
+                ...upInfo,
+                currentGuguLength:undefined,
+                averageGuguLength:undefined,
+                maxGuguLength:undefined,
+                videoNum: 0,
+                currentHaveVideoNum: -1,
+                guguLengthList: [],
+            }
+        })
+
+        for(let upGugu of followsGuguList.value) {
+            await handleOneGugu(upGugu.mid, upGugu);
+        }
+    }
+
     // 获取 up 主全部视频信息的方法
-    const getUpAllVideosInfo = async (up: UpGugu): Promise<VideoInfo[]>  => {
+    const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<VideoInfo[]>  => {
         // 获取 up 主制作的视频的数量
         let viedosInfoList = [];
-        const num = await getUpVideoNum(up.mid);
-        up.videoNum = num;
+        const num = await RequestQueue.reaquest<number>(
+            () => getUpVideoNum(mid)
+        )
+        guguRef.videoNum = num;
         // 如果没有视频的话，直接返回空数组
         if (!num) return viedosInfoList;
-        up.currentHaveVideoNum = 0;
+        guguRef.currentHaveVideoNum = num;
+
         // 获取的最多页数
         const time = Math.ceil(num / 50);
         // 当前获取的页数
         let currentPage = 1;
-        // 当前获取的所有视频信息
-        // up.progress = 0;
         // 当前页数少于最多页数时，请求数据
-        console.warn(`一共有${num}个视频，需要请求${time}次`);
         while (currentPage <= time) {
             // 获取一批 up 主的视频信息，每组上限 50 个
-            const newList = await getOneGroupUpVideoInfo(up.mid, currentPage);
+            const newList = await RequestQueue.reaquest<VideoInfo[]>(
+                () => getOneGroupUpVideoInfo(Number(myMid), currentPage)
+            );
+
+            guguRef.currentHaveVideoNum += newList.length;
+
             viedosInfoList.push(...newList);
-            currentPage++;
-            up.currentHaveVideoNum = viedosInfoList.length;
-            // up.progress = Math.min(100, up.progress + 100 / time);
-            await sleep(667);
         }
         return viedosInfoList;
     };
+
+    // 获得视频列表差异
+    const getVideosListDiff = async (mid: number, videosList: VideoInfo[]) => {
+        const videosIdList = videosList.map(video => video.bvid);
+        let isChange = false;
+        // 每次获取到的列表的长度
+        let resultLength = -1;
+        // 当前的页面
+        let currentPage = 1;
+        let newVideosList = [];
+        do {
+            const oneGroupVideosList = await RequestQueue.reaquest<VideoInfo[]>(
+                () => getOneGroupUpVideoInfo(Number(mid), currentPage)
+            );
+
+            resultLength = oneGroupVideosList.length;
+
+            currentPage += 1;
+
+            newVideosList = oneGroupVideosList.filter(video => {
+                return !videosIdList.includes(video.bvid);
+            });
+
+            // 如果有新关注
+            if(newVideosList.length > 0) {
+                videosList.unshift(...newVideosList);
+                isChange = true;
+            }
+        } while (resultLength !==0 && newVideosList.length > 0 );
+
+        return {
+            videosList,
+            isChange
+        }
+    }
+
+    // 将 up 主的 咕咕信息 加载到 前端
+    const handleOneGugu = async (mid: number, guguRef: UpGugu) => {
+        // 当前 up 在本地的视频列表
+        let videosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(String(mid));
+        // 如果本地没有 视频列表
+        if (!videosList) {
+            // 请求全部 videosList
+            videosList = await getUpAllVideosList(mid, guguRef);
+        }
+        else {
+            // 查看本地是否有 gugu
+            const upGugu = await Database.localStore.guguStore.getItem(String(mid));
+            // 如果有的话
+            if (upGugu) {
+                Object.assign(guguRef, upGugu as UpGugu)
+            }
+            // 计算 followsIdList 差量
+            const {
+                videosList: afterDiffList, 
+                isChange
+            } = await getVideosListDiff(mid, videosList);
+            
+            if(isChange) {
+                videosList = afterDiffList;
+            }
+        }
+
+        // 计算 gugu
+        const guguInfo = getGuguDetails(videosList);
+        // 更新本地的 gugu
+        await Database.localStore.guguStore.setItem(String(mid), guguInfo);
+        // 更新 guguRef
+        Object.assign(guguRef, guguInfo);
+    }
+
+    // 获取 up 咕咕三个数据
+    const getGuguDetails = async (videosList: VideoInfo[]) => {
+        const result = {
+            currentGuguLength: 0,
+            averageGuguLength: 0,
+            maxGuguLength: 0,
+            guguLengthList: [],
+        }
+        const videosListLength = videosList.length;
+        // 如果该 up 无视频 则拦截
+        if (videosListLength === 0) {
+            return result;
+        } 
+        // 计算三个数据 （第一次更新的时间，最后一次更新的时间，所有咕咕时间 ）
+        const firstUploadTime = videosList[videosListLength -1].created;
+        const lastUploadTime = videosList[0].created;
+        // 获取 最新咕咕时间
+        const currentGuguLength = getCurrentGuguLength(lastUploadTime);
+        // 获取 平均跟新频率
+        const averageGuguLength = getAverageGuguLength(
+            firstUploadTime,
+            videosList.length,
+        );
+        const guguLengthList = getGuguLengthList(videosList);
+        // 获取 最大咕咕时间
+        const maxGuguLength = getMaxGuguLength(
+            guguLengthList,
+            currentGuguLength
+        );
+
+        Object.assign(result, {
+            currentGuguLength,
+            averageGuguLength,
+            maxGuguLength,
+            guguLengthList,
+        })
+        return result;
+    }
+
     // 获取距离最新视频咕咕了多久
     const getCurrentGuguLength = (lastUploadTime: number): number => {
         const currentTime = Date.now();
         const now = Math.ceil(currentTime / 1000);
         return now - lastUploadTime
     };
+
     // 获取平均咕咕多少天
     const getAverageGuguLength = (firstUploadTime: number, listLength: number): number => {
         const currentTime = Date.now();
@@ -369,22 +310,41 @@ export const useUpList = () => {
         return averageLazyValue;
     };
 
-    // 获取咕咕视频的最大值
-    const getMaxGuguLength = (lazyLengthList: VideoLazyInfo[], currentLazyValue: number): number => {
-        // 获取所有视频的咕咕天数
-        const LazyValueList = lazyLengthList.map((item) => item.lazyValue);
-        return Math.max(...LazyValueList, currentLazyValue);
-    };
+    // 获取每一期视频各自咕了多长时间
+    const getGuguLengthList = (videoslist: VideoInfo[]) => {
+         const guguLengthList =  videoslist.map((video, index, arr) => {
+            const { bvid, created } = video;
+            // 定义 咕咕 的起始时间，默认是当前发布时间
+            let start = created;
+            // 咕咕 结束时间是当前视频发布时间
+            const end = created;
+            // 如果不是最后一个视频
+            if (index !== arr.length - 1) {
+                // 咕咕 起始时间是上一期视频发布时间
+                start = arr[index + 1].created;
+            }
+            // 如果是最后一个视频
+            return {
+                bvid,
+                guguLength: end - start,
+            };
+        });
 
-    // 对外暴露(全部 up 主的列表,)
 
+
+        return guguLengthList;
+    }
+
+    // 获取最长咕咕了多长时间
+    const getMaxGuguLength = (guguLengthList: GuguLength[], currentGuguLength: number) => {
+        const formatNumberList = guguLengthList.map(item => item.guguLength);
+
+        return Math.max(...formatNumberList, currentGuguLength);
+    }
+    
     return {
-        upGuguList,
+        followsGuguList,
         myGugu,
-        getMyGugu,
         init
     }
 }
-
-
-

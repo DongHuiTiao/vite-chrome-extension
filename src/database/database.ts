@@ -3,7 +3,7 @@ import { IDatabase, LocalStore } from './type';
 
 export class Database implements IDatabase {
     localStore: LocalStore<LocalForage> = {
-        followsIdList: null,
+        followsInfoList: null,
         guguStore: null,
         videosListStore: null,
     }

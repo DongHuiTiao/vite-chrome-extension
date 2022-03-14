@@ -2,7 +2,7 @@ import axios from 'axios';
 import { VideoInfo } from '../type';
 
 axios.defaults.withCredentials=true;
-interface UpInfo {
+export interface UpInfo {
 	mid: number;
 	uname: string;
 	face: string;
@@ -25,7 +25,11 @@ export const getOneGroupUpVideoInfo = async (mid: number, page: number, pageSize
 }
 
 // 获得up自己的个人信息
-export const getMyInfo = async (): Promise<any> => {
-	const res = await axios.get(`https://api.bilibili.com/x/space/acc/info?mid=8212729`);
+export const getMyInfo = async (mid: string): Promise<any> => {
+	const res = await axios.get(`https://api.bilibili.com/x/space/acc/info?mid=${mid}`);
 	return res.data.data;
 }
+
+// await RequestQueue.reaquest<UpInfo[]>(
+        //     () => Database.localStore.followsInfoList.getItem(myMid)
+        // )

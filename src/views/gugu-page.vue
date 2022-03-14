@@ -69,32 +69,31 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useUpList } from '../utils/useGugu';
-const { init, upGuguList, myGugu } = useUpList();
+import { useGugu } from '../utils/useGugu';
+const { followsGuguList, myGugu, init } = useGugu();
 
 // 是否打开遮罩层
 const visible = ref<boolean>(false);
 
 // 排序相关
 const sortType = ref<'' | 'current' | 'average' | 'max'>('');
+// 是否加入自己
+
 const isAddSelf = ref<boolean>(false);
 
 const showUpList = computed(() => {
-	const tempList = upGuguList.value.slice();
+	const tempList = followsGuguList.value.slice();
 	if (isAddSelf.value) tempList.unshift(myGugu.value);
 	if (!sortType.value) return tempList;
 	const key = sortType.value + 'GuguLength';
 	return tempList.sort((a, b) => b[key] - a[key]);
 });
 
-// 是否加入自己
-
 // 打开遮罩层
 const open = async () => {
 	document.getElementsByTagName('body')[0].style.overflow = 'hidden';
 	// 继续请求观众数据
 	visible.value = true;
-	// getAllFansInfo();
 	init();
 };
 
