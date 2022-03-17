@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { VideoInfo } from '../type';
+import { OneGroupVideoInfo, OneGroupVideoInfoCode } from '../type';
 
 axios.defaults.withCredentials=true;
 export interface UpInfo {
@@ -19,9 +19,18 @@ export const getUpVideoNum = async (mid: number): Promise<number> => {
 };
 
 // 获取一组视频信息的接口
-export const getOneGroupUpVideoInfo = async (mid: number, page: number, pageSize: number = 50): Promise<VideoInfo[]>  => {
+export const getOneGroupUpVideoInfo = async (mid: number, page: number, pageSize: number = 50): Promise<OneGroupVideoInfo>  => {
     const res = await axios.get(`https://api.bilibili.com/x/space/arc/search?mid=${mid}&ps=${pageSize}&tid=0&pn=${page}&keyword=&order=pubdate&jsonp=jsonp`);
-	return res.data.data.list.vlist
+	const result: OneGroupVideoInfo = {
+		code: res.data.code,
+		newList: []
+	}
+
+	if (result.code === OneGroupVideoInfoCode.Success) {
+		result.newList = res.data.data.list.vlist;
+	};
+	
+	return result;
 }
 
 // 获得up自己的个人信息
@@ -30,6 +39,3 @@ export const getMyInfo = async (mid: string): Promise<any> => {
 	return res.data.data;
 }
 
-// await RequestQueue.reaquest<UpInfo[]>(
-        //     () => Database.localStore.followsInfoList.getItem(myMid)
-        // )

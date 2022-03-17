@@ -1,18 +1,18 @@
-import { GetPromise, IRequestQueue, PromiseConfig } from "./type";
+import { IRequestQueue, PromiseConfig } from "./type";
 import { sleep } from './../utils/common';
 const Delay = 667
 
 export class RequestQueue implements IRequestQueue {
     queue: PromiseConfig[] = [];
-
+	isRequesting: boolean = false;
     add(promiseConfig: PromiseConfig) {
         this.queue.push(promiseConfig);
-        if (this.queue.length === 1) {
-			this.getNextPromise();
+        if (!this.isRequesting) {
+			this.requestLoop();
 		}
     }
 
-	async reaquest<T>(getPromise: GetPromise<T>): Promise<T> {
+	async reaquest<T>(promiseFn, params): Promise<T> {
 		let done = null;
 
 		const lisnter: Promise<T> = new Promise(resolve => {
@@ -20,29 +20,27 @@ export class RequestQueue implements IRequestQueue {
 		});
 
 		this.add({
-			getPromise,
+			promiseFn,
+			params,
 			done,
 		});
 
 		return lisnter;
 	}
 
-    async getNextPromise() {
-        const promiseConfig = this.queue[0];
-		const { getPromise, done } = promiseConfig;
+    async requestLoop() {
 		try {
-			const data = await getPromise();
-			done(data);
-
-			this.queue.shift();
-
-			if (this.queue.length === 0) {
-				return;
+			if (this.queue.length !== 0) {
+				this.isRequesting = true;
+				const promiseConfig = this.queue.shift();;
+				const { promiseFn, params, done } = promiseConfig;
+				const data = await promiseFn.apply(null, params);
+				done(data);
+				await sleep(Delay);
+				this.requestLoop();
+			} else {
+				this.isRequesting = false;
 			}
-
-			await sleep(Delay);
-
-			await this.getNextPromise();
 		} catch (error) {
 			console.log(error);
 		}

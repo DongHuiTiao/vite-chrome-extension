@@ -6,7 +6,7 @@ const sleep = async time => {
 	});
 };
 
-class RequestQueue {
+export class RequestQueue {
 	queue = [];
 	add(promiseConfig) {
 		this.queue.push(promiseConfig);

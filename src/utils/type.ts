@@ -3,6 +3,16 @@ export interface VideoInfo {
 	created: number;
 }
 
+export enum OneGroupVideoInfoCode {
+    Success = 0,
+    Abnormal = -1200
+}
+
+export interface OneGroupVideoInfo {
+	code: OneGroupVideoInfoCode;
+	newList: VideoInfo[]
+}
+
 export interface GuguLength {
 	bvid: string;
 	guguLength: number;

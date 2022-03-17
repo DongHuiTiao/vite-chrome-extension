@@ -9,7 +9,7 @@ import {
 import databaseFactory from './../database/index';
 import requestQueueFactory from './../request-queue/index'; 
 import { deepClone, getMyMid } from './common';
-import { VideoInfo, UpGugu, GuguLength } from './type';
+import { VideoInfo, UpGugu, GuguLength, OneGroupVideoInfo, OneGroupVideoInfoCode } from './type';
 
 const Database = databaseFactory();
 const RequestQueue = requestQueueFactory();
@@ -29,7 +29,7 @@ export const useGugu = () => {
         currentGuguLength:undefined,
         averageGuguLength:undefined,
         maxGuguLength:undefined,
-        videoNum: 0,
+        videoNum: -1,
         currentHaveVideoNum: -1,
         guguLengthList: [],
     })
@@ -72,9 +72,12 @@ export const useGugu = () => {
         // 开始不断地获取 up 主列表
         while (resultLength !== 0) {
             const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
-                () => getOneGroupFollows(Number(myMid), currentPage)
+                getOneGroupFollows,
+                [Number(myMid), currentPage]
             )
             followsInfoList.push(...oneGroupFollowsInfo);
+            resultLength = oneGroupFollowsInfo.length;
+            currentPage ++;
         }
         return followsInfoList;
     }
@@ -90,7 +93,8 @@ export const useGugu = () => {
         let newFollowsInfoList = [];
         do {
             const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
-                () => getOneGroupFollows(Number(myMid), currentPage)
+                getOneGroupFollows,
+                [Number(myMid), currentPage],
             );
 
             resultLength = oneGroupFollowsInfo.length;
@@ -144,7 +148,7 @@ export const useGugu = () => {
                 currentGuguLength:undefined,
                 averageGuguLength:undefined,
                 maxGuguLength:undefined,
-                videoNum: 0,
+                videoNum: -1,
                 currentHaveVideoNum: -1,
                 guguLengthList: [],
             }
@@ -160,12 +164,13 @@ export const useGugu = () => {
         // 获取 up 主制作的视频的数量
         let viedosInfoList = [];
         const num = await RequestQueue.reaquest<number>(
-            () => getUpVideoNum(mid)
+           getUpVideoNum,
+           [mid]
         )
         guguRef.videoNum = num;
         // 如果没有视频的话，直接返回空数组
         if (!num) return viedosInfoList;
-        guguRef.currentHaveVideoNum = num;
+        guguRef.currentHaveVideoNum = 0;
 
         // 获取的最多页数
         const time = Math.ceil(num / 50);
@@ -174,13 +179,18 @@ export const useGugu = () => {
         // 当前页数少于最多页数时，请求数据
         while (currentPage <= time) {
             // 获取一批 up 主的视频信息，每组上限 50 个
-            const newList = await RequestQueue.reaquest<VideoInfo[]>(
-                () => getOneGroupUpVideoInfo(Number(myMid), currentPage)
+            const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
+                getOneGroupUpVideoInfo,
+                [Number(mid), currentPage],
             );
+            if (code === OneGroupVideoInfoCode.Abnormal) {
+                continue;
+            }
 
             guguRef.currentHaveVideoNum += newList.length;
 
             viedosInfoList.push(...newList);
+            currentPage++;
         }
         return viedosInfoList;
     };
@@ -195,15 +205,21 @@ export const useGugu = () => {
         let currentPage = 1;
         let newVideosList = [];
         do {
-            const oneGroupVideosList = await RequestQueue.reaquest<VideoInfo[]>(
-                () => getOneGroupUpVideoInfo(Number(mid), currentPage)
+            const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
+                getOneGroupUpVideoInfo,
+                [Number(mid), currentPage]
             );
+            
+            if (code === OneGroupVideoInfoCode.Abnormal) {
+                newVideosList.push('error');
+                continue;
+            }
 
-            resultLength = oneGroupVideosList.length;
+            resultLength = newList.length;
 
             currentPage += 1;
 
-            newVideosList = oneGroupVideosList.filter(video => {
+            newVideosList = newList.filter(video => {
                 return !videosIdList.includes(video.bvid);
             });
 
@@ -222,33 +238,45 @@ export const useGugu = () => {
 
     // 将 up 主的 咕咕信息 加载到 前端
     const handleOneGugu = async (mid: number, guguRef: UpGugu) => {
+        // 查看本地是否有 gugu
+        const upGugu = await Database.localStore.guguStore.getItem(String(mid));
+        // 如果有的话
+        if (upGugu) {
+            Object.assign(guguRef, upGugu as UpGugu)
+        }
         // 当前 up 在本地的视频列表
         let videosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(String(mid));
+        let isVideosListChange: boolean = false;
         // 如果本地没有 视频列表
         if (!videosList) {
             // 请求全部 videosList
             videosList = await getUpAllVideosList(mid, guguRef);
+            isVideosListChange = true;
         }
         else {
-            // 查看本地是否有 gugu
-            const upGugu = await Database.localStore.guguStore.getItem(String(mid));
-            // 如果有的话
-            if (upGugu) {
-                Object.assign(guguRef, upGugu as UpGugu)
-            }
             // 计算 followsIdList 差量
+            guguRef.videoNum = videosList.length;
             const {
                 videosList: afterDiffList, 
                 isChange
             } = await getVideosListDiff(mid, videosList);
             
             if(isChange) {
+                isVideosListChange = true;
                 videosList = afterDiffList;
             }
         }
-
+        // 如果视频列表发生了改变
+        if (isVideosListChange) {
+            // 存到本地数据库
+            await Database.localStore.videosListStore.setItem(String(mid), videosList);
+        }
+        if (videosList.length === 0) {
+            guguRef.videoNum = 0;
+        }
         // 计算 gugu
         const guguInfo = getGuguDetails(videosList);
+        console.log(guguInfo, 'guguInfo')
         // 更新本地的 gugu
         await Database.localStore.guguStore.setItem(String(mid), guguInfo);
         // 更新 guguRef
@@ -256,7 +284,7 @@ export const useGugu = () => {
     }
 
     // 获取 up 咕咕三个数据
-    const getGuguDetails = async (videosList: VideoInfo[]) => {
+    const getGuguDetails = (videosList: VideoInfo[]) => {
         const result = {
             currentGuguLength: 0,
             averageGuguLength: 0,
