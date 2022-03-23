@@ -1,17 +1,16 @@
 
 export interface PromiseConfig {
     promiseFn(): Promise<unknown>;
-    params: Array<unknown>;
     done(data?: unknown): void;
 }
 
 interface promiseFn<T> {
-    (...params: Array<any>): Promise<T>;
+    (): Promise<T>;
 }
 
 export interface IRequestQueue {
     queue: PromiseConfig[];
     add(promiseConfig: PromiseConfig): void;
-    reaquest<T>(promiseFn: promiseFn<T>, params: Array<unknown>): Promise<T>;
+    reaquest<T>(promiseFn: promiseFn<T>): Promise<T>;
     requestLoop(): Promise<void>;
 }

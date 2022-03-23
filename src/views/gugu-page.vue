@@ -78,7 +78,7 @@
 						</template>
 					</div>
 				</div>
-				<!-- 伸缩杠 -->
+				<!-- TODO 伸缩杠 -->
 				<div class="width-handler" @mousedown="pressWidthHandle"></div>
 				<!-- 控制区域 -->
 				<div class="control">
@@ -110,10 +110,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted, onBeforeMount, onMounted } from 'vue';
+import { onPageOpen } from '../utils/up-space-gugu';
 import { useGugu } from '../utils/useGugu';
-const { followsGuguList, myGugu, init } = useGugu();
+import databaseFactory from '../database';
+import { getTimeDiff } from '../utils/common/index';
 
+const Database = databaseFactory();
+
+const { followsGuguList, myGugu, init } = useGugu();
+onMounted(async () => {
+	// 连接 本地 数据库
+	await Database.connect();
+	// TODO 给 up 主视频页面上的视频增加 咕咕数据 的显示
+	onPageOpen();
+});
 // 是否打开遮罩层
 const visible = ref<boolean>(false);
 
@@ -126,7 +137,34 @@ const sortOrder = ref<boolean>(false);
 
 const userNameFilter = ref<string>('');
 
-const showResultAreaWidth = ref<number>(70);
+const windowWidth = ref<number>(0);
+const mousePositionWidth = ref<number>(0);
+
+const drawerWidth = computed(() => {
+	return windowWidth.value * 0.9;
+});
+const showResultAreaWidth = computed(() => {
+	if (!mousePositionWidth.value) return 70;
+	// 抽离距离左边窗口的宽度
+	const blockWidth = windowWidth.value - drawerWidth.value;
+	// 鼠标距离窗口左边的宽度
+	const mouseToDrawerBorderWidth = mousePositionWidth.value - blockWidth;
+	const proportion = Math.floor((mouseToDrawerBorderWidth / drawerWidth.value) * 100);
+
+	return proportion;
+});
+const onResize = e => {
+	windowWidth.value = e.currentTarget.innerWidth;
+};
+
+window.addEventListener('resize', onResize);
+onBeforeMount(() => {
+	windowWidth.value = document.body.clientWidth;
+});
+onUnmounted(() => {
+	window.removeEventListener('resize', onResize);
+});
+
 // 是否按着 width-handler
 const isPressWidthHandler = ref<boolean>(false);
 // 按下 width-handler 的时候
@@ -135,9 +173,9 @@ const pressWidthHandle = () => {
 };
 // 鼠标在抽屉页面移动的时候
 const drawerMouseMove = e => {
-	console.log('是否按着', isPressWidthHandler.value);
 	if (isPressWidthHandler.value) {
-		console.log(e);
+		const { clientX } = e;
+		mousePositionWidth.value = clientX;
 	}
 };
 const drawerMouseUp = () => {
@@ -167,6 +205,15 @@ const open = async () => {
 
 // 计算视频列表获取进度
 const getProgress = (currentNum: number, videoNum: number) => {
+	// const formatVideoNum = videoNum === -1 ? 0 : videoNum;
+	if (videoNum === -1) {
+		return 0;
+	}
+
+	if (videoNum === 0) {
+		return 0;
+	}
+
 	return Number(((currentNum / videoNum) * 100).toFixed(2));
 };
 
@@ -177,25 +224,10 @@ const handleClose = () => {
 	visible.value = false;
 	document.getElementsByTagName('body')[0].style.overflow = '';
 };
-// 根据时间长度计算多少天
-const getTimeDiff = (timeLength: number) => {
-	const second = timeLength;
-	const remianSecond = second % 60;
-
-	const minute = (second - remianSecond) / 60;
-	const remainMinute = minute % 60;
-
-	const hour = (minute - remainMinute) / 60;
-	const remainHour = hour % 24;
-
-	const day = (hour - remainHour) / 24;
-
-	return `${day}天${remainHour}小时${remainMinute}分${remianSecond}秒`;
-};
 
 // 跳转到 up 主的页面
 const toUpPage = (mid: number) => {
-	window.location.href = `https://space.bilibili.com/${mid}/video`;
+	window.open(`https://space.bilibili.com/${mid}/video`);
 };
 </script>
 
@@ -221,6 +253,12 @@ const toUpPage = (mid: number) => {
 		cursor: ew-resize;
 		background-color: #778ca191;
 	}
+	// -webkit-touch-callout: none;
+	// -webkit-user-select: none;
+	// -khtml-user-select: none;
+	// -moz-user-select: none;
+	// -ms-user-select: none;
+	user-select: none;
 }
 .up-item {
 	transition: background-color 0.5s;

@@ -136,3 +136,18 @@ export const getMyMid = () => {
 	return getCookie('DedeUserID');
 }
 
+// 根据时间长度计算多少天
+export const getTimeDiff = (timeLength: number) => {
+	const second = timeLength;
+	const remianSecond = second % 60;
+
+	const minute = (second - remianSecond) / 60;
+	const remainMinute = minute % 60;
+
+	const hour = (minute - remainMinute) / 60;
+	const remainHour = hour % 24;
+
+	const day = (hour - remainHour) / 24;
+
+	return `${day}天${remainHour}小时${remainMinute}分${remianSecond}秒`;
+};

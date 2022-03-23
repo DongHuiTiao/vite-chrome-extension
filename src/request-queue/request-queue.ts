@@ -12,7 +12,7 @@ export class RequestQueue implements IRequestQueue {
 		}
     }
 
-	async reaquest<T>(promiseFn, params): Promise<T> {
+	async reaquest<T>(promiseFn): Promise<T> {
 		let done = null;
 
 		const lisnter: Promise<T> = new Promise(resolve => {
@@ -21,7 +21,6 @@ export class RequestQueue implements IRequestQueue {
 
 		this.add({
 			promiseFn,
-			params,
 			done,
 		});
 
@@ -33,8 +32,8 @@ export class RequestQueue implements IRequestQueue {
 			if (this.queue.length !== 0) {
 				this.isRequesting = true;
 				const promiseConfig = this.queue.shift();;
-				const { promiseFn, params, done } = promiseConfig;
-				const data = await promiseFn.apply(null, params);
+				const { promiseFn, done } = promiseConfig;
+				const data = await promiseFn();
 				done(data);
 				await sleep(Delay);
 				this.requestLoop();

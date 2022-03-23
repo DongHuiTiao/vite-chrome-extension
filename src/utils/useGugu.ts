@@ -8,7 +8,7 @@ import {
 } from './api/up';
 import databaseFactory from './../database/index';
 import requestQueueFactory from './../request-queue/index'; 
-import { deepClone, getMyMid } from './common';
+import { getMyMid } from './common';
 import { VideoInfo, UpGugu, GuguLength, OneGroupVideoInfo, OneGroupVideoInfoCode } from './type';
 
 const Database = databaseFactory();
@@ -41,10 +41,6 @@ export const useGugu = () => {
         // 只初始化一次
         if (isInit) return;
         isInit = true;
-
-        // 连接 本地 数据库
-        await Database.connect();
-
         // 获取关注的 up 主的 咕咕信息
         getFollowsGuguList();
         getMyGugu();
@@ -72,8 +68,7 @@ export const useGugu = () => {
         // 开始不断地获取 up 主列表
         while (resultLength !== 0) {
             const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
-                getOneGroupFollows,
-                [Number(myMid), currentPage]
+                () => getOneGroupFollows(Number(myMid), currentPage)
             )
             followsInfoList.push(...oneGroupFollowsInfo);
             resultLength = oneGroupFollowsInfo.length;
@@ -93,8 +88,7 @@ export const useGugu = () => {
         let newFollowsInfoList = [];
         do {
             const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
-                getOneGroupFollows,
-                [Number(myMid), currentPage],
+                () => getOneGroupFollows(Number(myMid), currentPage)
             );
 
             resultLength = oneGroupFollowsInfo.length;
@@ -164,8 +158,7 @@ export const useGugu = () => {
         // 获取 up 主制作的视频的数量
         let viedosInfoList = [];
         const num = await RequestQueue.reaquest<number>(
-           getUpVideoNum,
-           [mid]
+           () => getUpVideoNum(mid),
         )
         guguRef.videoNum = num;
         // 如果没有视频的话，直接返回空数组
@@ -180,8 +173,7 @@ export const useGugu = () => {
         while (currentPage <= time) {
             // 获取一批 up 主的视频信息，每组上限 50 个
             const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
-                getOneGroupUpVideoInfo,
-                [Number(mid), currentPage],
+                () => getOneGroupUpVideoInfo(Number(mid), currentPage)
             );
             if (code === OneGroupVideoInfoCode.Abnormal) {
                 continue;
@@ -206,8 +198,7 @@ export const useGugu = () => {
         let newVideosList = [];
         do {
             const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
-                getOneGroupUpVideoInfo,
-                [Number(mid), currentPage]
+                () => getOneGroupUpVideoInfo(Number(mid), currentPage)
             );
             
             if (code === OneGroupVideoInfoCode.Abnormal) {
@@ -358,8 +349,6 @@ export const useGugu = () => {
             };
         });
 
-
-
         return guguLengthList;
     }
 
@@ -372,6 +361,8 @@ export const useGugu = () => {
     
     return {
         followsGuguList,
+        getUpAllVideosList,
+        getGuguDetails,
         myGugu,
         init
     }
