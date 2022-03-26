@@ -267,7 +267,6 @@ export const useGugu = () => {
         }
         // 计算 gugu
         const guguInfo = getGuguDetails(videosList);
-        console.log(guguInfo, 'guguInfo')
         // 更新本地的 gugu
         await Database.localStore.guguStore.setItem(String(mid), guguInfo);
         // 更新 guguRef
@@ -358,11 +357,44 @@ export const useGugu = () => {
 
         return Math.max(...formatNumberList, currentGuguLength);
     }
-    
+
+    // 从本地的 indexedDB 中删除该 up 主的记录
+    const deleteUpGugu = (up: UpGugu) => {
+        const upMid = String(up.mid);
+        Promise.all([
+            Database.localStore.guguStore.removeItem(upMid, () => {
+                console.log(upMid, '已从本地删除 guguStore');
+            }),
+            Database.localStore.videosListStore.removeItem(upMid, () => {
+                console.log(upMid, '已从本地删除 videosListStore');
+            }),
+        ])
+        console.log('已经全部删除好了')
+        // 全部结束之后，从视图中删除该 up 主
+        const removeIndex = followsGuguList.value.findIndex(currentUp => {
+            return currentUp.mid === up.mid;
+        });
+
+        followsGuguList.value.splice(removeIndex, 1);
+        // TODO 要显示通知
+        // ElMessage({
+        //     message: '已从本地删除该 up 主的信息',
+        //     type: 'success',
+        // })
+    }
+
+    const refreshUpGugu = async (up: UpGugu) => {
+        const mid = up.mid;
+        await handleOneGugu(mid, up);
+        console.log('刷新完毕')
+    }
+
     return {
         followsGuguList,
         getUpAllVideosList,
         getGuguDetails,
+        deleteUpGugu,
+        refreshUpGugu,
         myGugu,
         init
     }

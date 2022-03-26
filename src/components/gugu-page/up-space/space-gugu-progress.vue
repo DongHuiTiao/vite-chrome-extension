@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { upGugu } from '../../utils/up-space-gugu';
+import { upGugu } from '../../../utils/up-space-gugu';
 import { computed } from 'vue';
 // 计算视频列表获取进度
 const progress = computed(() => {

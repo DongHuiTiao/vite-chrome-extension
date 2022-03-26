@@ -20,18 +20,20 @@
 					<div class="table-head flex align-center">
 						<div class="index">序号</div>
 
-						<!-- TODO 点击头像跳转到 up 主个人页面 -->
+						<!-- 点击头像跳转到 up 主个人页面 -->
 						<div class="avatar">头像</div>
-						<div class="nickName">昵称</div>
+						<div class="nick-name">昵称</div>
 
 						<!-- TODO 最新更新时间 -->
 						<!-- 鼠标覆盖上去后，可以显示视频封面标题 -->
 
-						<div class="videosNum">视频数量</div>
+						<div class="videos-num">视频数量</div>
 
-						<div class="currentGugu">当前咕咕时长</div>
-						<div class="averageGugu">平均更新频率</div>
-						<div class="maxGugu">最多咕咕时长</div>
+						<div class="current-gugu">当前咕咕时长</div>
+						<div class="average-gugu">平均更新频率</div>
+						<div class="max-gugu">最多咕咕时长</div>
+						<!-- TODO 加一个操作区域 -->
+						<div class="operate-area">操作区域</div>
 					</div>
 					<!-- 表身 -->
 					<div
@@ -40,14 +42,18 @@
 						class="flex align-center up-item"
 						@click="toUpPage(up.mid)"
 					>
+						<!-- 序号 -->
 						<div class="index">
 							{{ index + 1 }}
 						</div>
+						<!-- 头像 -->
 						<div class="avatar">
 							<img class="up-item-img" :src="up.face" alt="" />
 						</div>
-						<div class="nickName">{{ up.uname }}</div>
-						<div class="videosNum">{{ up.guguLengthList.length }}</div>
+						<!-- 昵称 -->
+						<div class="nick-name">{{ up.uname }}</div>
+						<!-- 视频数量 -->
+						<div class="videos-num">{{ up.guguLengthList.length }}</div>
 						<template v-if="up.videoNum === -1">
 							<div>等待获取中</div>
 						</template>
@@ -57,9 +63,9 @@
 							<template v-else>
 								<!-- 已经有了计算结果 -->
 								<template v-if="up.currentGuguLength">
-									<div class="currentGugu">{{ getTimeDiff(up.currentGuguLength) }}</div>
-									<div class="averageGugu">{{ getTimeDiff(up.averageGuguLength) }}</div>
-									<div class="maxGugu">{{ getTimeDiff(up.maxGuguLength) }}</div>
+									<div class="current-gugu">{{ getTimeDiff(up.currentGuguLength) }}</div>
+									<div class="average-gugu">{{ getTimeDiff(up.averageGuguLength) }}</div>
+									<div class="max-gugu">{{ getTimeDiff(up.maxGuguLength) }}</div>
 								</template>
 								<!-- 没有结果，仍需获取和计算 -->
 								<div v-else style="width: 75%">
@@ -73,12 +79,23 @@
 										stroke-linecap="square"
 									/>
 								</div>
-								<div></div>
 							</template>
 						</template>
+						<!-- 操作区域 -->
+						<div class="operate-area">
+							<!-- 加载按钮 -->
+							<!-- 刷新按钮 -->
+							<el-button :icon="Refresh" circle @click.stop="refreshUpGugu(up)" />
+							<!-- 删除按钮 -->
+							<el-popconfirm title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
+								<template #reference>
+									<el-button type="danger" :icon="Delete" circle />
+								</template>
+							</el-popconfirm>
+						</div>
 					</div>
 				</div>
-				<!-- TODO 伸缩杠 -->
+				<!-- 伸缩杠 -->
 				<div class="width-handler" @mousedown="pressWidthHandle"></div>
 				<!-- 控制区域 -->
 				<div class="control">
@@ -110,20 +127,24 @@
 </template>
 
 <script setup lang="ts">
+// TODO 把组件抽出去，单独维护
 import { ref, computed, onUnmounted, onBeforeMount, onMounted } from 'vue';
 import { onPageOpen } from '../utils/up-space-gugu';
 import { useGugu } from '../utils/useGugu';
 import databaseFactory from '../database';
 import { getTimeDiff } from '../utils/common/index';
+import { Delete, Refresh } from '@element-plus/icons-vue';
 
 const Database = databaseFactory();
 
-const { followsGuguList, myGugu, init } = useGugu();
+const { followsGuguList, myGugu, init, deleteUpGugu, refreshUpGugu } = useGugu();
+
 onMounted(async () => {
 	// 连接 本地 数据库
 	await Database.connect();
-	// TODO 给 up 主视频页面上的视频增加 咕咕数据 的显示
+	// 给 up 主视频页面上的视频增加 咕咕数据 的显示
 	onPageOpen();
+	// TODO 在 UP 主的个人空间页点击到视频列表时，加载显示视频托更时间国能
 });
 // 是否打开遮罩层
 const visible = ref<boolean>(false);
@@ -131,8 +152,8 @@ const visible = ref<boolean>(false);
 // 排序相关
 const sortType = ref<'' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videoNum'>('');
 // 是否加入自己
-
 const isAddSelf = ref<boolean>(false);
+// 排列顺序
 const sortOrder = ref<boolean>(false);
 
 const userNameFilter = ref<string>('');
@@ -279,21 +300,22 @@ const toUpPage = (mid: number) => {
 .avatar {
 	width: 100px;
 }
-.nickName {
+.nick-name {
 	width: 10%;
 }
-.videosNum {
-	width: 12%;
+.videos-num {
+	width: 11%;
 }
-.currentGugu {
-	width: 21%;
+.current-gugu,
+.average-gugu,
+.max-gugu {
+	width: 18%;
 }
-.averageGugu {
-	width: 21%;
+
+.operate-area {
+	width: 10%;
 }
-.maxGugu {
-	width: 21%;
-}
+
 .control {
 	padding: 0 30px;
 }
@@ -304,5 +326,7 @@ const toUpPage = (mid: number) => {
 	color: white;
 	width: 100%;
 	height: 45px;
+}
+.operate-area {
 }
 </style>

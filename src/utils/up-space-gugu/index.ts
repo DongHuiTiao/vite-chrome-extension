@@ -12,8 +12,8 @@
 import { UpGugu } from '../type';
 import databaseFactory from '../../database/index';
 import { getTimeDiff } from '../common/index';
-import SpaceGuguSwitch from '../../components/gugu-page/space-gugu-switch.vue';
-import SpaceGuguProgress from '../../components/gugu-page/space-gugu-progress.vue';
+import SpaceGuguSwitch from '../../components/up-space/gugu-page/up-space/space-gugu-switch.vue';
+import SpaceGuguProgress from '../../components/up-space/gugu-page/up-space/space-gugu-progress.vue';
 import { createApp, ref } from 'vue';
 import { useGugu } from './../useGugu';
 
@@ -306,6 +306,7 @@ const showUpGuguTag = (upGuguData: UpGuguData) => {
                         height: 21px;
                         display: flex;
                         align-items: center;
+                        user-select: none;
                     "
                 >   
                     当前咕咕时长 
@@ -325,6 +326,7 @@ const showUpGuguTag = (upGuguData: UpGuguData) => {
                         height: 21px;
                         display: flex;
                         align-items: center;
+                        user-select: none;
                     "
                 >
                     平均更新频率 
@@ -344,6 +346,7 @@ const showUpGuguTag = (upGuguData: UpGuguData) => {
                         height: 21px;
                         display: flex;
                         align-items: center;
+                        user-select: none;
                     "
                 >
                     最多咕咕时长 

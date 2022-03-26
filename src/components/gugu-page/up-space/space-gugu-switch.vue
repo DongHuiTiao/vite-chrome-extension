@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { isOpen, changIsOpen } from '../../utils/up-space-gugu/index';
+import { isOpen, changIsOpen } from '../../../utils/up-space-gugu/index';
 </script>
 
 <style></style>

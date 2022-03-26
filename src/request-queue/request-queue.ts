@@ -1,6 +1,6 @@
 import { IRequestQueue, PromiseConfig } from "./type";
 import { sleep } from './../utils/common';
-const Delay = 667
+const Delay = 1000
 
 export class RequestQueue implements IRequestQueue {
     queue: PromiseConfig[] = [];
