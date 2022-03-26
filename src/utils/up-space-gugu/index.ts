@@ -12,8 +12,8 @@
 import { UpGugu } from '../type';
 import databaseFactory from '../../database/index';
 import { getTimeDiff } from '../common/index';
-import SpaceGuguSwitch from '../../components/up-space/gugu-page/up-space/space-gugu-switch.vue';
-import SpaceGuguProgress from '../../components/up-space/gugu-page/up-space/space-gugu-progress.vue';
+import SpaceGuguSwitch from '../../components/gugu-page/up-space/space-gugu-switch.vue';
+import SpaceGuguProgress from '../../components/gugu-page/up-space/space-gugu-progress.vue';
 import { createApp, ref } from 'vue';
 import { useGugu } from './../useGugu';
 
@@ -73,9 +73,6 @@ const addProgress = () => {
     newElement.classList.add('be-tab-item');
     newElement.id = 'space-gugu-progress';
     newElement.style.display = 'flex';
-    // width
-    // aligncenter
-    // mini
     Object.assign(newElement.style, {
         display: 'flex',
         width: '233px',
@@ -217,7 +214,6 @@ type UpGuguData = ReturnType<GetGuguDetails>
 
 // 把计算好的 up 主的托更数据显示到页面上
 const insertGuguDataToDom = (upGuguData: UpGuguData) => {
-
     // 插入三个数据到 dom 中
     showUpGuguTag(upGuguData);
 

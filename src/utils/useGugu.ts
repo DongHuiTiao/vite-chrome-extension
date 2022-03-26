@@ -1,4 +1,4 @@
-import { Ref, ref } from 'vue';
+import { computed, Ref, ref, watch } from 'vue';
 import { 
     getOneGroupFollows,
     getUpVideoNum,
@@ -14,11 +14,11 @@ import { VideoInfo, UpGugu, GuguLength, OneGroupVideoInfo, OneGroupVideoInfoCode
 const Database = databaseFactory();
 const RequestQueue = requestQueueFactory();
 
-export const useGugu = () => {
+const initGugu = () => {
     // 获取当前 b 站用户 的 登录 mid
     const myMid = getMyMid();
 
-    // 我关注的 up 的咕咕列表信息
+    // 所有我关注的 up 的咕咕列表信息
     const followsGuguList: Ref<UpGugu[]> = ref<UpGugu[]>([]);
 
     // 我自己的咕咕信息
@@ -77,80 +77,55 @@ export const useGugu = () => {
         return followsInfoList;
     }
 
-    // 计算关注 up 列表的差量
-    const getFollowsInfoListDiff = async (followsInfoList: UpInfo[]) => {
-        const followsIdList = followsInfoList.map(upInfo => upInfo.mid);
-        let isChange = false;
-        // 每次获取到的列表的长度
-        let resultLength = -1;
-        // 当前的页面
-        let currentPage = 1;
-        let newFollowsInfoList = [];
-        do {
-            const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
-                () => getOneGroupFollows(Number(myMid), currentPage)
-            );
-
-            resultLength = oneGroupFollowsInfo.length;
-
-            currentPage += 1;
-
-            newFollowsInfoList = oneGroupFollowsInfo.filter(upInfo => {
-                return !followsIdList.includes(upInfo.mid);
-            });
-
-            // 如果有新关注
-            if(newFollowsInfoList.length > 0) {
-                followsInfoList.unshift(...newFollowsInfoList);
-                isChange = true;
-            }
-        } while (resultLength !==0 && newFollowsInfoList.length > 0 );
-
-        return {
-            followsInfoList,
-            isChange
-        }
-    }
-
     // 获取我关注的 up 的 gugu 列表
     const getFollowsGuguList = async () => {
         // 查看本地的 followsIdList 是否为空
         let followsInfoList: UpInfo[] = await Database.localStore.followsInfoList.getItem(myMid)
 
-        if (!followsInfoList) {
-            // 请求全部 follows
-            followsInfoList = await getAllFollowsInfoList();
-        }
-        else {
-            // 计算 followsIdList 差量
-            const {
-                followsInfoList: afterDiffList, 
-                isChange
-            } = await getFollowsInfoListDiff(followsInfoList);
-
-            if(isChange) {
-                followsInfoList = afterDiffList;
-            }
-        }
+        if (followsInfoList) {
+            // 先把所有人的数据插入到页面上
+            console.time('handleAllGugu');
+            await updateAllFollowsGugu(followsInfoList);
+            console.timeEnd('handleAllGugu');
+        } 
+        console.time('getAllFollowsInfoList')
+        const newFollowsInfoList = await getAllFollowsInfoList();
+        console.timeEnd('getAllFollowsInfoList')
+        await updateAllFollowsGugu(newFollowsInfoList);
+    
         // 更新本地数据
-        await Database.localStore.followsInfoList.setItem(myMid, followsInfoList);
-
-        // 初始化 followsGuguList
-        followsGuguList.value = followsInfoList.map(upInfo => {
-            return {
-                ...upInfo,
-                currentGuguLength:undefined,
-                averageGuguLength:undefined,
-                maxGuguLength:undefined,
-                videoNum: -1,
-                currentHaveVideoNum: -1,
-                guguLengthList: [],
-            }
-        })
+        await Database.localStore.followsInfoList.setItem(myMid, newFollowsInfoList);
 
         for(let upGugu of followsGuguList.value) {
             await handleOneGugu(upGugu.mid, upGugu);
         }
+    }
+
+    // 把所有本地的 up 主的咕咕信息显示到页面上
+    const updateAllFollowsGugu = (followsInfoList: UpInfo[]) => {
+        return Promise.all(followsInfoList.map((upInfo, index) => {
+            return Database.localStore.guguStore.getItem(String(upInfo.mid)).then(upGugu => {
+                // 如果有的话
+                if (upGugu) {
+                    const {
+                        currentGuguLength,
+                        averageGuguLength,
+                        maxGuguLength,
+                        guguLengthList,
+                    } = upGugu as UpGugu;
+                    const gugu = {
+                        ...upInfo,
+                        currentGuguLength,
+                        averageGuguLength,
+                        maxGuguLength,
+                        videoNum: guguLengthList.length,
+                        currentHaveVideoNum: guguLengthList.length,
+                        guguLengthList,
+                    }
+                    followsGuguList.value[index] = gugu;
+                }
+            });
+        }))
     }
 
     // 获取 up 主全部视频信息的方法
@@ -230,11 +205,6 @@ export const useGugu = () => {
     // 将 up 主的 咕咕信息 加载到 前端
     const handleOneGugu = async (mid: number, guguRef: UpGugu) => {
         // 查看本地是否有 gugu
-        const upGugu = await Database.localStore.guguStore.getItem(String(mid));
-        // 如果有的话
-        if (upGugu) {
-            Object.assign(guguRef, upGugu as UpGugu)
-        }
         // 当前 up 在本地的视频列表
         let videosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(String(mid));
         let isVideosListChange: boolean = false;
@@ -359,9 +329,9 @@ export const useGugu = () => {
     }
 
     // 从本地的 indexedDB 中删除该 up 主的记录
-    const deleteUpGugu = (up: UpGugu) => {
+    const deleteUpGugu = async (up: UpGugu) => {
         const upMid = String(up.mid);
-        Promise.all([
+        await Promise.all([
             Database.localStore.guguStore.removeItem(upMid, () => {
                 console.log(upMid, '已从本地删除 guguStore');
             }),
@@ -369,13 +339,13 @@ export const useGugu = () => {
                 console.log(upMid, '已从本地删除 videosListStore');
             }),
         ])
-        console.log('已经全部删除好了')
         // 全部结束之后，从视图中删除该 up 主
         const removeIndex = followsGuguList.value.findIndex(currentUp => {
             return currentUp.mid === up.mid;
         });
 
         followsGuguList.value.splice(removeIndex, 1);
+        refreshShowGuguList();
         // TODO 要显示通知
         // ElMessage({
         //     message: '已从本地删除该 up 主的信息',
@@ -383,19 +353,72 @@ export const useGugu = () => {
         // })
     }
 
-    const refreshUpGugu = async (up: UpGugu) => {
+    const refreshOneUpGugu = async (up: UpGugu) => {
         const mid = up.mid;
         await handleOneGugu(mid, up);
-        console.log('刷新完毕')
+    }
+
+    // 排序相关
+    const sortType = ref<'' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videoNum'>('');
+    // 是否加入自己
+    const isAddSelf = ref<boolean>(false);
+    // 排列顺序
+    const sortOrder = ref<boolean>(false);
+
+    const userNameFilter = ref<string>('');
+
+    const filterGuguList = computed<UpGugu[]>(() => {
+        const tempList = followsGuguList.value.slice().filter(up => {
+            return up.uname.indexOf(userNameFilter.value) > -1;
+        });
+    
+        if (isAddSelf.value) tempList.unshift(myGugu.value);
+        if (!sortType.value) return tempList;
+        const key = sortType.value;
+        if (sortOrder.value) {
+            return tempList.sort((a, b) => a[key] - b[key]);
+        }
+        return tempList.sort((a, b) => b[key] - a[key]);
+    });
+
+    watch([sortType, isAddSelf, sortOrder, userNameFilter], () => {
+        console.time('refreshShowGuguList');
+        refreshShowGuguList();
+        console.timeEnd('refreshShowGuguList')
+    })
+
+    // 展示出来的 up 主列表
+    const showGuguList: Ref<UpGugu[]> = ref<UpGugu[]>([]);
+
+    // 展示出来的 up 主的数量
+    const showGuguListLength: Ref<number> = ref<number>(100);
+
+    const refreshShowGuguList = () => {
+        showGuguList.value = filterGuguList.value.slice(0, showGuguListLength.value)
+    }
+
+    const loadMoreGuguList = () => {
+        showGuguListLength.value += 100;
+	    refreshShowGuguList();
     }
 
     return {
         followsGuguList,
+        showGuguList,
+        loadMoreGuguList,
         getUpAllVideosList,
         getGuguDetails,
         deleteUpGugu,
-        refreshUpGugu,
+        refreshOneUpGugu,
         myGugu,
-        init
+        init,
+        sortType,
+        isAddSelf,
+        sortOrder,
+        userNameFilter
     }
 }
+
+const init = initGugu()
+
+export const useGugu = () => init;
