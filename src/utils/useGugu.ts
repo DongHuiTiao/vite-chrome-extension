@@ -86,12 +86,14 @@ const initGugu = () => {
             // 先把所有人的数据插入到页面上
             console.time('handleAllGugu');
             await updateAllFollowsGugu(followsInfoList);
+            refreshShowGuguList();
             console.timeEnd('handleAllGugu');
         } 
         console.time('getAllFollowsInfoList')
         const newFollowsInfoList = await getAllFollowsInfoList();
         console.timeEnd('getAllFollowsInfoList')
         await updateAllFollowsGugu(newFollowsInfoList);
+        refreshShowGuguList();
     
         // 更新本地数据
         await Database.localStore.followsInfoList.setItem(myMid, newFollowsInfoList);
@@ -397,7 +399,7 @@ const initGugu = () => {
     const showGuguListLength: Ref<number> = ref<number>(100);
 
     const refreshShowGuguList = () => {
-        showGuguList.value = filterGuguList.value.slice(0, showGuguListLength.value)
+        showGuguList.value = filterGuguList.value.slice(0, showGuguListLength.value);
     }
 
     const loadMoreGuguList = () => {

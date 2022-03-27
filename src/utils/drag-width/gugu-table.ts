@@ -103,7 +103,7 @@ const changeRightConfigWidth = (newX: number) => {
     }
 
     // 所有表头的宽度比例
-	const guguTableHeadWidth = document.getElementById('gugu-table-head').clientWidth;
+	const guguTableHeadWidth = document.getElementById('gugu-table__head').clientWidth;
     // 前面表头的宽度长度
     const beforeWidths = guguTableHeadWidth * beforeWidthPercentage / 100;
     const originHeadWidth = guguHeadsMap[pressuring.value].width;
@@ -162,7 +162,7 @@ const changeLeftConfigWidth = (newX: number) => {
     }
 
     // 整个表头的宽度
-	const guguTableHeadWidth = document.getElementById('gugu-table-head').clientWidth;
+	const guguTableHeadWidth = document.getElementById('gugu-table__head').clientWidth;
     // 前面表头的宽度长度
     const beforeWidths = guguTableHeadWidth * beforeWidthPercentage / 100;
     const originHeadWidth = guguHeadsMap[pressuring.value].width;

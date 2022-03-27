@@ -19,7 +19,6 @@
 </template>
 
 <script setup lang="ts">
-// TODO 把组件抽出去，单独维护
 import { ref, onMounted } from 'vue';
 import { onPageOpen } from '../utils/up-space-gugu';
 import { useGugu } from '../utils/useGugu';
