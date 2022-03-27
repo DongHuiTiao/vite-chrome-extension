@@ -89,7 +89,6 @@ watch([pressure, pressuring], ([newPressure, newPressuring]) => {
 
 // 修改右侧的宽度
 const changeRightConfigWidth = (newX: number) => {
-    // TODO 给 最左边的列增加宽度
     if (!pressuring.value) {
         return;
     }
@@ -148,7 +147,6 @@ const changeRightConfigWidth = (newX: number) => {
 
 // 修改左边的宽度
 const changeLeftConfigWidth = (newX: number) => {
-    // TODO 给 最左边的列增加宽度
     if (!pressuring.value) {
         return;
     }
@@ -213,5 +211,4 @@ const getLastHeadWidth = () => {
         console.log(guguHeadsList[i].key, guguHeadsList[i].width);
     };
     guguHeadsList[guguHeadsList.length - 1].width = 100 - beforeWidth;
-    console.log('最后一项的宽度是', 100 - beforeWidth);
 }

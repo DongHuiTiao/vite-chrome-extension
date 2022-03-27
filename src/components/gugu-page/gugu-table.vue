@@ -1,9 +1,10 @@
 <template>
 	<div class="flex">
-		<!-- 展示结果 -->
+		<!-- 展示托更数据结果 -->
 		<div class="gugu-table__show-result" :class="{ 'gugu-table__show-result--open__control': isShowControlDrawer }">
 			<!-- 表头 -->
 			<div id="gugu-table-head" class="table-head flex align-center">
+				<!-- 每个字段表格，可控制宽高 -->
 				<GuguTableHead v-for="(head, index) in guguHeadsList" :key="'head' + index" :head="head.key" />
 			</div>
 			<!-- 表身 -->
@@ -69,83 +70,19 @@
 			</ul>
 		</div>
 		<!-- 控制区域 -->
-		<div class="gugu-table__control__btn">
-			<el-button @click="isShowControlDrawer = true">打开面板</el-button>
-		</div>
-
-		<div class="gugu-table__drawer" :class="{ 'gugu-table__drawer--open__control': isShowControlDrawer }">
-			<div class="control">
-				<el-button @click="isShowControlDrawer = false">关闭</el-button>
-				<el-divider content-position="left">排序</el-divider>
-				<div><el-radio v-model="sortType" label="" size="large">不排序</el-radio></div>
-				<div>
-					<el-radio v-model="sortType" label="currentGuguLength" size="large">根据当前咕咕时间</el-radio>
-				</div>
-				<div>
-					<el-radio v-model="sortType" label="averageGuguLength" size="large">根据平均咕咕时间</el-radio>
-				</div>
-				<div>
-					<el-radio v-model="sortType" label="maxGuguLength" size="large">根据最大咕咕时间</el-radio>
-				</div>
-				<div><el-radio v-model="sortType" label="videoNum" size="large">根据视频数量</el-radio></div>
-
-				<el-divider content-position="left">是否降序排序</el-divider>
-				<el-switch v-model="sortOrder" />
-
-				<el-divider content-position="left">是否加入自己的数据</el-divider>
-				<el-switch v-model="isAddSelf" />
-
-				<el-divider content-position="left">搜索 up 主</el-divider>
-				<el-input v-model="userNameFilter" size="mini"></el-input>
-			</div>
-		</div>
-
-		<!-- <el-drawer v-model="isShowControlDrawer" title="排序面板" :append-to-body="true" :modal="false" size="30%">
-			<div class="control">
-				<el-divider content-position="left">排序</el-divider>
-				<div><el-radio v-model="sortType" label="" size="large">不排序</el-radio></div>
-				<div>
-					<el-radio v-model="sortType" label="currentGuguLength" size="large">根据当前咕咕时间</el-radio>
-				</div>
-				<div>
-					<el-radio v-model="sortType" label="averageGuguLength" size="large">根据平均咕咕时间</el-radio>
-				</div>
-				<div>
-					<el-radio v-model="sortType" label="maxGuguLength" size="large">根据最大咕咕时间</el-radio>
-				</div>
-				<div><el-radio v-model="sortType" label="videoNum" size="large">根据视频数量</el-radio></div>
-
-				<el-divider content-position="left">是否降序排序</el-divider>
-				<el-switch v-model="sortOrder" />
-
-				<el-divider content-position="left">是否加入自己的数据</el-divider>
-				<el-switch v-model="isAddSelf" />
-
-				<el-divider content-position="left">搜索 up 主</el-divider>
-				<el-input v-model="userNameFilter" size="mini"></el-input>
-			</div>
-		</el-drawer> -->
+		<GuguTableControl />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import { useGugu } from '../../utils/useGugu';
 import { getTimeDiff } from '../../utils/common/index';
 import { Delete, Refresh } from '@element-plus/icons-vue';
 import GuguTableHead from './gugu-table-head.vue';
 import { guguHeadsList } from '../../utils/drag-width/gugu-table';
+import GuguTableControl from './gugu-table-control.vue';
 
-const {
-	deleteUpGugu,
-	refreshOneUpGugu,
-	showGuguList,
-	loadMoreGuguList,
-	sortType,
-	isAddSelf,
-	sortOrder,
-	userNameFilter,
-} = useGugu();
+const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList, isShowControlDrawer } = useGugu();
 
 // 计算视频列表获取进度
 const getProgress = (currentNum: number, videoNum: number) => {
@@ -165,9 +102,6 @@ const getProgress = (currentNum: number, videoNum: number) => {
 const toUpPage = (mid: number) => {
 	window.open(`https://space.bilibili.com/${mid}/video`);
 };
-
-// 抽屉相关的功能
-const isShowControlDrawer = ref<boolean>(false);
 </script>
 
 <style lang="less">
@@ -186,31 +120,6 @@ const isShowControlDrawer = ref<boolean>(false);
 			width: 66.6%;
 		}
 	}
-	&__drawer {
-		width: 33.3%;
-		height: 100vh;
-		background-color: white;
-		box-shadow: 0px 0px 26px 3px #7c7c7c;
-		position: absolute;
-		right: -38.3%;
-		transition: right 0.3s;
-		&--open__control {
-			right: 0;
-		}
-	}
-}
-.width-handler {
-	width: 8px;
-	cursor: pointer;
-	transition: background-color 0.3s;
-	&:hover {
-		background-color: #65acf5;
-	}
-	&:active {
-		cursor: ew-resize;
-		background-color: #778ca191;
-	}
-	user-select: none;
 }
 .up-item {
 	transition: background-color 0.5s;

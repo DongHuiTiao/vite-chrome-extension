@@ -353,6 +353,9 @@ const initGugu = () => {
         // })
     }
 
+    // 抽屉相关的功能
+    const isShowControlDrawer = ref<boolean>(false);
+
     const refreshOneUpGugu = async (up: UpGugu) => {
         const mid = up.mid;
         await handleOneGugu(mid, up);
@@ -415,7 +418,8 @@ const initGugu = () => {
         sortType,
         isAddSelf,
         sortOrder,
-        userNameFilter
+        userNameFilter,
+        isShowControlDrawer
     }
 }
 
