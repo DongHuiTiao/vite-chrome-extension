@@ -29,7 +29,7 @@ const { isShowControlDrawer } = useGugu();
 		width: 100%;
 		transition: width 0.3s;
 		&--open__control {
-			width: 66.6%;
+			width: 79%;
 		}
 	}
 }

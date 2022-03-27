@@ -24,7 +24,9 @@
 				<div>等待获取中</div>
 			</template>
 			<template v-else>
-				<div v-if="up.videoNum === 0">这个 up 主还没有视频哦</div>
+				<div v-if="up.videoNum === 0" class="no-videos" :style="{ width: noVideosWidth }">
+					这个 up 主还没有视频哦
+				</div>
 				<!-- up主有视频 -->
 				<template v-else>
 					<!-- 已经有了计算结果 -->
@@ -40,7 +42,7 @@
 						</div>
 					</template>
 					<!-- 没有结果，仍需获取和计算 -->
-					<div v-else style="width: 75%">
+					<div v-else class="no-videos" :style="{ width: noVideosWidth }">
 						<div>当前获取到的视频数量：{{ up.currentHaveVideoNum }}，共需要获取{{ up.videoNum }}</div>
 						<el-progress
 							:text-inside="true"
@@ -72,8 +74,15 @@ import { useGugu } from '../../utils/useGugu';
 import { getTimeDiff } from '../../utils/common/index';
 import { Delete, Refresh } from '@element-plus/icons-vue';
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
+import { computed } from 'vue';
 
 const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList } = useGugu();
+
+const noVideosWidth = computed(() => {
+	const width =
+		guguHeadsMap.currentGuguLength.width + guguHeadsMap.averageGuguLength.width + guguHeadsMap.maxGuguLength.width;
+	return width + '%';
+});
 
 // 计算视频列表获取进度
 const getProgress = (currentNum: number, videoNum: number) => {
@@ -95,10 +104,16 @@ const toUpPage = (mid: number) => {
 };
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
+.gugu-table-body-col-style() {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
 .up-item {
 	transition: background-color 0.5s;
 	border-radius: 16px;
+	padding: 12px;
 	cursor: pointer;
 
 	&-img {
@@ -109,30 +124,28 @@ const toUpPage = (mid: number) => {
 		background-color: #00a1d6b3;
 	}
 }
-.gugu-table-body-item() {
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.no-videos {
+	.gugu-table-body-col-style();
 }
 .index {
-	.gugu-table-body-item();
+	.gugu-table-body-col-style();
 }
 .avatar {
-	.gugu-table-body-item();
+	.gugu-table-body-col-style();
 }
 .nick-name {
-	.gugu-table-body-item();
+	.gugu-table-body-col-style();
 }
 .videos-num {
-	.gugu-table-body-item();
+	.gugu-table-body-col-style();
 }
 .current-gugu,
 .average-gugu,
 .max-gugu {
-	.gugu-table-body-item();
+	.gugu-table-body-col-style();
 }
 
 .operate-area {
-	.gugu-table-body-item();
+	.gugu-table-body-col-style();
 }
 </style>

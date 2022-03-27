@@ -35,13 +35,15 @@ const { sortType, isAddSelf, sortOrder, userNameFilter, isShowControlDrawer } = 
 
 <style lang="less" scoped>
 .gugu-table__drawer {
-	width: 33.3%;
+	width: 21%;
 	height: 100vh;
 	background-color: white;
 	box-shadow: 0px 0px 26px 3px #7c7c7c;
 	position: absolute;
-	right: -33.3%;
+	right: -21%;
 	transition: right 0.3s;
+	padding: 30px;
+	box-sizing: border-box;
 	&--open__control {
 		right: 0;
 	}
