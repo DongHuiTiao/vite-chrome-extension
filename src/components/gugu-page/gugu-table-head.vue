@@ -1,99 +1,22 @@
 <template>
-	<div
-		class="table-head__item"
-		:style="{ width: guguHeadsMap[head].width + '%' }"
-		:class="{ 'table-head__item--hover': isShowHover }"
-		@mouseover="isHover = true"
-		@mouseleave="isHover = false"
-	>
-		<div
-			class="table-head__item__gripper table-head__item__gripper__left"
-			@mousedown="mouseChange(MouseChangType.MouseDown, MouseChangePosition.Left)"
-			@mouseup="mouseChange(MouseChangType.MouseUp, MouseChangePosition.Left)"
-		>
-			<div class="table-head__item__gripper__string"></div>
-			<div class="table-head__item__gripper__string"></div>
-		</div>
-		<div>{{ GuguHeadsName[head] }}</div>
-		<div
-			class="table-head__item__gripper table-head__item__gripper__right"
-			@mousedown="mouseChange(MouseChangType.MouseDown, MouseChangePosition.Right)"
-			@mouseup="mouseChange(MouseChangType.MouseUp, MouseChangePosition.Right)"
-		>
-			<div class="table-head__item__gripper__string"></div>
-			<div class="table-head__item__gripper__string"></div>
-		</div>
+	<div id="gugu-table-head" class="gugu-table-head flex align-center">
+		<!-- 每个字段表格，可控制宽高 -->
+		<GuguTableHeadItem v-for="(head, index) in guguHeadsList" :key="'head' + index" :head="head.key" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { guguHeadsMap, pressuring, GuguHeadsName } from '../../utils/drag-width/gugu-table';
-
-const isHover = ref<boolean>(false);
-
-const isShowHover = computed(() => {
-	if (pressuring.value && pressuring.value !== props.head) {
-		return false;
-	}
-	return isHover.value || guguHeadsMap[props.head].leftPress || guguHeadsMap[props.head].rightPress;
-});
-
-enum MouseChangType {
-	MouseDown,
-	MouseUp,
-}
-
-enum MouseChangePosition {
-	Left = 'leftPress',
-	Right = 'rightPress',
-}
-// eslint-disable-next-line no-undef
-const props = defineProps({
-	head: {
-		type: String,
-		default: '',
-	},
-});
-
-const mouseChange = (type: MouseChangType, position: MouseChangePosition) => {
-	pressuring.value = props.head;
-	const isPressing = type === MouseChangType.MouseDown;
-	guguHeadsMap[props.head][position] = isPressing;
-};
+import GuguTableHeadItem from './gugu-table-head-item.vue';
+import { guguHeadsList } from '../../utils/drag-width/gugu-table';
 </script>
 
 <style lang="less">
-.table-head__item {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+.gugu-table-head {
+	position: sticky;
+	top: 0;
+	background-color: #0000007d;
 	color: white;
-	// padding: 3px;
-	border-radius: 3px;
-	user-select: none;
-	overflow: hidden;
-	height: 80%;
-	transition: background-color 0.3s;
-	&--hover {
-		.table-head__item__gripper__string {
-			display: block;
-		}
-		background-color: white;
-		color: black;
-	}
-
-	&__gripper {
-		display: flex;
-		padding: 2px;
-		cursor: pointer;
-		&__string {
-			display: none;
-			width: 1px;
-			height: 12px;
-			background-color: rgb(226, 226, 226);
-			margin-left: 1px;
-		}
-	}
+	width: 100%;
+	height: 45px;
 }
 </style>

@@ -3,10 +3,7 @@
 		<!-- 展示托更数据结果 -->
 		<div class="gugu-table__show-result" :class="{ 'gugu-table__show-result--open__control': isShowControlDrawer }">
 			<!-- 表头 -->
-			<div id="gugu-table-head" class="table-head flex align-center">
-				<!-- 每个字段表格，可控制宽高 -->
-				<GuguTableHead v-for="(head, index) in guguHeadsList" :key="'head' + index" :head="head.key" />
-			</div>
+			<GuguTableHead />
 			<!-- 表身 -->
 			<ul v-infinite-scroll="loadMoreGuguList" :infinite-scroll-distance="100" :infinite-scroll-immediate="false">
 				<li
@@ -79,7 +76,6 @@ import { useGugu } from '../../utils/useGugu';
 import { getTimeDiff } from '../../utils/common/index';
 import { Delete, Refresh } from '@element-plus/icons-vue';
 import GuguTableHead from './gugu-table-head.vue';
-import { guguHeadsList } from '../../utils/drag-width/gugu-table';
 import GuguTableControl from './gugu-table-control.vue';
 
 const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList, isShowControlDrawer } = useGugu();
@@ -154,19 +150,5 @@ const toUpPage = (mid: number) => {
 
 .operate-area {
 	width: 10%;
-}
-
-.control {
-	padding: 0 30px;
-}
-.table-head {
-	position: sticky;
-	top: 0;
-	background-color: #0000007d;
-	color: white;
-	width: 100%;
-	height: 45px;
-}
-.operate-area {
 }
 </style>
