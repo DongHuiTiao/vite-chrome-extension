@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import eslintPlugin from 'vite-plugin-eslint';
 import { resolve } from 'path';
-import styleImport from 'vite-plugin-style-import';
+// import styleImport from 'vite-plugin-style-import';
 import ViteComponents, { ElementPlusResolver } from 'vite-plugin-components';
 import alias from '@rollup/plugin-alias';
 // import AutoImport from 'unplugin-auto-import/vite';
@@ -23,17 +23,17 @@ export default defineConfig({
 		ViteComponents({
 			customComponentResolvers: [ElementPlusResolver()],
 		}),
-		styleImport({
-			libs: [
-				{
-					libraryName: 'element-plus',
-					esModule: true,
-					resolveStyle: name => {
-						return `element-plus/lib/theme-chalk/${name}.css`;
-					},
-				},
-			],
-		}),
+		// styleImport({
+		// 	libs: [
+		// 		{
+		// 			libraryName: 'element-plus',
+		// 			esModule: true,
+		// 			resolveStyle: name => {
+		// 				return `element-plus/dist/index.css`;
+		// 			},
+		// 		},
+		// 	],
+		// }),
 		// AutoImport({
 		// 	resolvers: [ElementPlusResolver()],
 		// }),
