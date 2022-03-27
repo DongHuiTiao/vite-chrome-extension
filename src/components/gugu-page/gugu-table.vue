@@ -24,7 +24,7 @@ const { isShowControlDrawer } = useGugu();
 <style lang="less">
 .gugu-table {
 	&__show-result {
-		height: 98vh;
+		height: 100vh;
 		overflow: scroll;
 		width: 100%;
 		transition: width 0.3s;
@@ -32,5 +32,25 @@ const { isShowControlDrawer } = useGugu();
 			width: 79%;
 		}
 	}
+}
+/*修改滚动条样式*/
+div::-webkit-scrollbar {
+	width: 6px;
+	height: 10px;
+	/**/
+}
+div::-webkit-scrollbar-track {
+	background: rgba(239, 239, 239, 0);
+	border-radius: 2px;
+}
+div::-webkit-scrollbar-thumb {
+	background: #bfbfbf;
+	border-radius: 10px;
+}
+div::-webkit-scrollbar-thumb:hover {
+	background: #333;
+}
+div::-webkit-scrollbar-corner {
+	background: #179a16;
 }
 </style>

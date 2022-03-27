@@ -1,7 +1,9 @@
 <template>
 	<!-- 控制区域 -->
 	<div class="gugu-table__drawer" :class="{ 'gugu-table__drawer--open__control': isShowControlDrawer }">
-		<div class="gugu-table__drawer__switch" @click="isShowControlDrawer = !isShowControlDrawer">打开面板</div>
+		<div class="gugu-table__drawer__switch" @click="isShowControlDrawer = !isShowControlDrawer">
+			{{ isShowControlDrawer ? '关闭面板' : '打开面板' }}
+		</div>
 		<div class="control">
 			<el-divider content-position="left">排序</el-divider>
 			<div><el-radio v-model="sortType" label="" size="large">不排序</el-radio></div>
@@ -61,7 +63,7 @@ const { sortType, isAddSelf, sortOrder, userNameFilter, isShowControlDrawer } = 
 		justify-content: center;
 		top: calc(44% - 60px);
 		border: 1px solid #f0f0f0;
-		box-shadow: -10px 9px 9px 1px #cdcaca;
+		box-shadow: -10px 9px 9px -9px #edebeb;
 		border-right: 0;
 		border-radius: 7px 0 0 7px;
 		user-select: none;
