@@ -113,10 +113,6 @@ const initGugu = () => {
     
         // 更新本地数据
         await Database.localStore.followsInfoList.setItem(myMid, newFollowsInfoList);
-
-        // for(let upGugu of followsGuguList.value) {
-        //     await handleOneGugu(upGugu.mid, upGugu);
-        // }
     }
 
     // 把所有本地的 up 主的咕咕信息显示到页面上
@@ -156,8 +152,10 @@ const initGugu = () => {
         }))
     }
 
+    const isBatchRequesting = ref<boolean>(false);
+    const fetchMode = ref<string>('single');
     // 获取 up 主全部视频信息的方法
-    const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<VideoInfo[]>  => {
+    const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<VideoInfo[] | undefined>  => {
         // 获取 up 主制作的视频的数量
         let viedosInfoList = [];
         const num = await RequestQueue.reaquest<number>(
@@ -174,6 +172,11 @@ const initGugu = () => {
         let currentPage = 1;
         // 当前页数少于最多页数时，请求数据
         while (currentPage <= time) {
+            if (fetchMode.value === 'batch' && !isBatchRequesting.value) {
+                guguRef.videosNum = -1;
+                guguRef.currentHaveVideosNum = -1;
+                return;
+            }
             // 获取一批 up 主的视频信息，每组上限 50 个
             const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
                 () => getOneGroupUpVideoInfo(Number(mid), currentPage)
@@ -240,6 +243,8 @@ const initGugu = () => {
         if (!videosList) {
             // 请求全部 videosList
             videosList = await getUpAllVideosList(mid, guguRef);
+            // 如果被中断了请求，则停止处理
+            if (!videosList) return false;
             isVideosListChange = true;
         }
         else {
@@ -269,15 +274,22 @@ const initGugu = () => {
         await Database.localStore.guguStore.setItem(String(mid), guguInfo);
         // 更新 guguRef
         Object.assign(guguRef, guguInfo);
+        return true;
     }
 
     // 批量获取剩余 up 主的咕咕信息
     const batchFetchRemainGugu = async () => {
+        isBatchRequesting.value = true;
+        fetchMode.value = 'batch';
         const remainGuguList = followsGuguList.value.filter(up => {
             return up.videosNum === -1;
         })
         for(let upGugu of remainGuguList) {
-            await handleOneGugu(upGugu.mid, upGugu);
+            const isContinue = await handleOneGugu(upGugu.mid, upGugu);
+            if (!isContinue) {
+                fetchMode.value = 'single';
+                break;
+            } 
         }
     }
 
@@ -494,6 +506,7 @@ const initGugu = () => {
         isLocalHasFollowsInfo,
         isHideUnFetchUp,
         isHideNoVideosUp,
+        isBatchRequesting,
         batchFetchRemainGugu,
         batchRefreshGugu,
     }

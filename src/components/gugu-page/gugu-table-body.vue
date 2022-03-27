@@ -31,7 +31,6 @@
 				</div>
 			</template>
 			<template v-else>
-				<!-- TODO 如果 up 主在本地没数据，则用指引文案引导点击获取信息按钮 -->
 				<div v-if="up.videosNum === 0" class="no-videos" :style="{ width: noVideosWidth }">
 					这个 up 主还没有视频哦
 				</div>
@@ -66,7 +65,6 @@
 			<!-- 操作区域 -->
 			<div class="operate-area" :style="{ width: guguHeadsMap['operateArea'].width + '%' }">
 				<!-- 加载按钮 -->
-				<!-- TODO 用合适的方法替代 -->
 				<el-button
 					:icon="up.videosNum === -1 ? Download : Refresh"
 					size="small"

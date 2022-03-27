@@ -29,7 +29,8 @@
 			<el-divider content-position="center">批量操作</el-divider>
 			<el-popover placement="top-start" :width="200" trigger="hover" content="一键自动获取剩余 up 主的咕咕数据">
 				<template #reference>
-					<el-button @click="batchFetchRemainGugu">一键获取</el-button>
+					<el-button v-if="!isBatchRequesting" @click="batchFetchRemainGugu">一键获取</el-button>
+					<el-button v-else type="danger" @click="isBatchRequesting = false">终止获取</el-button>
 				</template>
 			</el-popover>
 			<el-popover placement="top-start" :width="200" trigger="hover" content="一键刷新已获取的 up 主的咕咕数据">
@@ -51,6 +52,7 @@ const {
 	isShowControlDrawer,
 	isHideUnFetchUp,
 	isHideNoVideosUp,
+	isBatchRequesting,
 	batchFetchRemainGugu,
 	batchRefreshGugu,
 } = useGugu();
