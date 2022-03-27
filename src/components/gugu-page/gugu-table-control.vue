@@ -5,27 +5,55 @@
 			{{ isShowControlDrawer ? '关闭面板' : '打开面板' }}
 		</div>
 		<div class="control">
-			<el-divider content-position="left">排序</el-divider>
+			<el-divider content-position="center">排序</el-divider>
 			<el-select v-model="sortType" class="m-2" placeholder="选择排序方式">
 				<el-option v-for="item in sortTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
 			</el-select>
 
-			<el-divider content-position="left">是否降序排序</el-divider>
+			<el-divider content-position="center">是否降序排序</el-divider>
 			<el-radio v-model="sortOrder" :disabled="!sortType" :label="false" size="large">降序</el-radio>
 			<el-radio v-model="sortOrder" :disabled="!sortType" :label="true" size="large">升序</el-radio>
 
-			<el-divider content-position="left">是否加入自己的数据</el-divider>
+			<el-divider content-position="center">隐藏</el-divider>
+			<div>
+				<el-checkbox v-model="isHideUnFetchUp" label="还没获取的 up 主" />
+				<el-checkbox v-model="isHideNoVideosUp" label="没有视频的 up 主" />
+			</div>
+
+			<el-divider content-position="center">是否加入自己</el-divider>
 			<el-switch v-model="isAddSelf" />
 
-			<el-divider content-position="left">搜索 up 主</el-divider>
+			<el-divider content-position="center">搜索 up 主</el-divider>
 			<el-input v-model="userNameFilter"></el-input>
+
+			<el-divider content-position="center">批量操作</el-divider>
+			<el-popover placement="top-start" :width="200" trigger="hover" content="一键自动获取剩余 up 主的咕咕数据">
+				<template #reference>
+					<el-button @click="batchFetchRemainGugu">一键获取</el-button>
+				</template>
+			</el-popover>
+			<el-popover placement="top-start" :width="200" trigger="hover" content="一键刷新已获取的 up 主的咕咕数据">
+				<template #reference>
+					<el-button @click="batchRefreshGugu">一键刷新</el-button>
+				</template>
+			</el-popover>
 		</div>
 	</div>
 </template>
 
 <script setup>
 import { useGugu } from '../../utils/useGugu';
-const { sortType, isAddSelf, sortOrder, userNameFilter, isShowControlDrawer } = useGugu();
+const {
+	sortType,
+	isAddSelf,
+	sortOrder,
+	userNameFilter,
+	isShowControlDrawer,
+	isHideUnFetchUp,
+	isHideNoVideosUp,
+	batchFetchRemainGugu,
+	batchRefreshGugu,
+} = useGugu();
 const sortTypeOptions = [
 	{
 		label: '不排序',

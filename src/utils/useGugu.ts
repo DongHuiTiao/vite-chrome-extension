@@ -271,6 +271,26 @@ const initGugu = () => {
         Object.assign(guguRef, guguInfo);
     }
 
+    // 批量获取剩余 up 主的咕咕信息
+    const batchFetchRemainGugu = async () => {
+        const remainGuguList = followsGuguList.value.filter(up => {
+            return up.videosNum === -1;
+        })
+        for(let upGugu of remainGuguList) {
+            await handleOneGugu(upGugu.mid, upGugu);
+        }
+    }
+
+    // 批量刷新已获取的 up 主的咕咕信息
+    const batchRefreshGugu = async () => {
+        const doneGuguList = followsGuguList.value.filter(up => {
+            return up.videosNum !== -1;
+        });
+        for(let upGugu of doneGuguList) {
+            await handleOneGugu(upGugu.mid, upGugu);
+        }
+    }
+
     // 获取 up 咕咕三个数据
     const getGuguDetails = (videosList: VideoInfo[]) => {
         const result = {
@@ -396,23 +416,45 @@ const initGugu = () => {
     // 排列顺序
     const sortOrder = ref<boolean>(false);
 
+    // 是否隐藏还没有获取视频的 up 主
+    const isHideUnFetchUp = ref<boolean>(false);
+
+    // 是否获取没有视频的 up 主
+    const isHideNoVideosUp = ref<boolean>(false);
+
+    // 搜索框 up 主的文本框
     const userNameFilter = ref<string>('');
 
     const filterGuguList = computed<UpGugu[]>(() => {
-        const tempList = followsGuguList.value.slice().filter(up => {
+        // 过滤掉搜索的部分
+        let tempList = followsGuguList.value.slice().filter(up => {
             return up.uname.indexOf(userNameFilter.value) > -1;
         });
+        // 隐藏没获取视频的 up 主
+        if (isHideUnFetchUp.value) {
+            tempList = tempList.filter(up => up.videosNum !== -1);
+        }
+
+        // 隐藏没有更新视频的 up 主
+        if (isHideNoVideosUp.value) {
+            tempList = tempList.filter(up => up.videosNum !== 0);
+        }
     
+        // 如果加入自己的数据
         if (isAddSelf.value) tempList.unshift(myGugu.value);
+        // 如果不排序
         if (!sortType.value) return tempList;
+        // 如果排序
         const key = sortType.value;
+        // 升序
         if (sortOrder.value) {
             return tempList.sort((a, b) => a[key] - b[key]);
         }
+        // 降序
         return tempList.sort((a, b) => b[key] - a[key]);
     });
 
-    watch([sortType, isAddSelf, sortOrder, userNameFilter], () => {
+    watch([sortType, isAddSelf, sortOrder, userNameFilter, isHideUnFetchUp, isHideNoVideosUp], () => {
         console.time('refreshShowGuguList');
         refreshShowGuguList();
         console.timeEnd('refreshShowGuguList')
@@ -449,7 +491,11 @@ const initGugu = () => {
         userNameFilter,
         isShowControlDrawer,
         getFollowsInfoListProgress,
-        isLocalHasFollowsInfo
+        isLocalHasFollowsInfo,
+        isHideUnFetchUp,
+        isHideNoVideosUp,
+        batchFetchRemainGugu,
+        batchRefreshGugu,
     }
 }
 
