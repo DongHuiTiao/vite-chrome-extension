@@ -208,7 +208,6 @@ const getLastHeadWidth = () => {
     let beforeWidth = 0;
     for (let i = 0; i < guguHeadsList.length - 1; i++) {
         beforeWidth += guguHeadsList[i].width;
-        console.log(guguHeadsList[i].key, guguHeadsList[i].width);
     };
     guguHeadsList[guguHeadsList.length - 1].width = 100 - beforeWidth;
 }

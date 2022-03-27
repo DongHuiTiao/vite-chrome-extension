@@ -82,7 +82,6 @@ const addProgress = () => {
     dom.append(newElement);
     const spaceGuguProgress = createApp(SpaceGuguProgress as any);
     spaceGuguProgress.mount('#space-gugu-progress');
-    console.log('运行了吗，addProgress')
 }
 
 const removeProgress = () => {

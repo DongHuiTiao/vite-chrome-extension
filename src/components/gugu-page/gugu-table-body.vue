@@ -7,17 +7,19 @@
 			@click="toUpPage(up.mid)"
 		>
 			<!-- 序号 -->
-			<div class="index">
+			<div class="index" :style="{ width: guguHeadsMap['index'].width + '%' }">
 				{{ index + 1 }}
 			</div>
 			<!-- 头像 -->
-			<div class="avatar">
+			<div class="avatar" :style="{ width: guguHeadsMap['avatar'].width + '%' }">
 				<img v-lazy="up.face" class="up-item-img" alt="" />
 			</div>
 			<!-- 昵称 -->
-			<div class="nick-name">{{ up.uname }}</div>
+			<div class="nick-name" :style="{ width: guguHeadsMap['nickName'].width + '%' }">{{ up.uname }}</div>
 			<!-- 视频数量 -->
-			<div class="videos-num">{{ up.guguLengthList.length }}</div>
+			<div class="videos-num" :style="{ width: guguHeadsMap['videosNum'].width + '%' }">
+				{{ up.guguLengthList.length }}
+			</div>
 			<template v-if="up.videoNum === -1">
 				<div>等待获取中</div>
 			</template>
@@ -27,9 +29,15 @@
 				<template v-else>
 					<!-- 已经有了计算结果 -->
 					<template v-if="up.currentGuguLength">
-						<div class="current-gugu">{{ getTimeDiff(up.currentGuguLength) }}</div>
-						<div class="average-gugu">{{ getTimeDiff(up.averageGuguLength) }}</div>
-						<div class="max-gugu">{{ getTimeDiff(up.maxGuguLength) }}</div>
+						<div class="current-gugu" :style="{ width: guguHeadsMap['currentGuguLength'].width + '%' }">
+							{{ getTimeDiff(up.currentGuguLength) }}
+						</div>
+						<div class="average-gugu" :style="{ width: guguHeadsMap['averageGuguLength'].width + '%' }">
+							{{ getTimeDiff(up.averageGuguLength) }}
+						</div>
+						<div class="max-gugu" :style="{ width: guguHeadsMap['maxGuguLength'].width + '%' }">
+							{{ getTimeDiff(up.maxGuguLength) }}
+						</div>
 					</template>
 					<!-- 没有结果，仍需获取和计算 -->
 					<div v-else style="width: 75%">
@@ -44,7 +52,7 @@
 				</template>
 			</template>
 			<!-- 操作区域 -->
-			<div class="operate-area">
+			<div class="operate-area" :style="{ width: guguHeadsMap['operateArea'].width + '%' }">
 				<!-- 加载按钮 -->
 				<!-- 刷新按钮 -->
 				<el-button :icon="Refresh" size="small" circle @click.stop="refreshOneUpGugu(up)" />
@@ -63,6 +71,7 @@
 import { useGugu } from '../../utils/useGugu';
 import { getTimeDiff } from '../../utils/common/index';
 import { Delete, Refresh } from '@element-plus/icons-vue';
+import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 
 const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList } = useGugu();
 
@@ -100,25 +109,30 @@ const toUpPage = (mid: number) => {
 		background-color: #00a1d6b3;
 	}
 }
+.gugu-table-body-item() {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
 .index {
-	width: 51px;
+	.gugu-table-body-item();
 }
 .avatar {
-	width: 100px;
+	.gugu-table-body-item();
 }
 .nick-name {
-	width: 10%;
+	.gugu-table-body-item();
 }
 .videos-num {
-	width: 11%;
+	.gugu-table-body-item();
 }
 .current-gugu,
 .average-gugu,
 .max-gugu {
-	width: 18%;
+	.gugu-table-body-item();
 }
 
 .operate-area {
-	width: 10%;
+	.gugu-table-body-item();
 }
 </style>
