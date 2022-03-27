@@ -25,7 +25,7 @@ export interface UpGugu {
     currentGuguLength?: number; // 当前 咕咕 多久
     averageGuguLength?: number; // 平均 更新 频率
     maxGuguLength?: number; // 最大 咕咕 时间
-    videoNum: number; // 视频的数量
-    currentHaveVideoNum: number; // 当前获取了多少
+    videosNum: number; // 视频的数量
+    currentHaveVideosNum: number; // 当前获取了多少
 	guguLengthList: GuguLength[]; // 每一期视频咕咕了多长时间
 }

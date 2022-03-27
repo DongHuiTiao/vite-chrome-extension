@@ -11,8 +11,8 @@
 			</el-select>
 
 			<el-divider content-position="left">是否降序排序</el-divider>
-			<el-radio v-model="sortOrder" :label="false" size="large">升序</el-radio>
-			<el-radio v-model="sortOrder" :label="true" size="large">降序</el-radio>
+			<el-radio v-model="sortOrder" :disabled="!sortType" :label="false" size="large">降序</el-radio>
+			<el-radio v-model="sortOrder" :disabled="!sortType" :label="true" size="large">升序</el-radio>
 
 			<el-divider content-position="left">是否加入自己的数据</el-divider>
 			<el-switch v-model="isAddSelf" />
@@ -32,20 +32,20 @@ const sortTypeOptions = [
 		value: '',
 	},
 	{
-		label: '根据当前咕咕时间',
+		label: '根据视频数量',
+		value: 'videosNum',
+	},
+	{
+		label: '根据当前咕咕时长',
 		value: 'currentGuguLength',
 	},
 	{
-		label: '根据平均咕咕时间',
+		label: '根据平均更新频率',
 		value: 'averageGuguLength',
 	},
 	{
-		label: '根据最大咕咕时间',
+		label: '根据最大咕咕时长',
 		value: 'maxGuguLength',
-	},
-	{
-		label: '根据视频数量',
-		value: 'videoNum',
 	},
 ];
 </script>

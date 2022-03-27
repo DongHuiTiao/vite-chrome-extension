@@ -13,7 +13,7 @@ export const getOneGroupFollows = async (mid: number, currentPage: number): Prom
 }
 
 // 获取up主所有视频数量
-export const getUpVideoNum = async (mid: number): Promise<number> => {
+export const getUpVideosNum = async (mid: number): Promise<number> => {
 	const res = await axios.get(`https://api.bilibili.com/x/space/navnum?mid=${mid}`);
 	return res.data.data.video;
 };

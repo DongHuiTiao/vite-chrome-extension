@@ -4,7 +4,7 @@ const { jsonFetch } = useFetch();
 
 export const videoApi = () => {
     // 获取当前 up 主视频数量的接口
-    const getUpVideoNum = (mid: number) => {
+    const getUpVideosNum = (mid: number) => {
         return fetch(`https://api.bilibili.com/x/space/navnum?mid=${mid}`, {
             "mode": "cors",
             "credentials": "omit"
@@ -18,7 +18,7 @@ export const videoApi = () => {
             
     }
     return {
-        getUpVideoNum,
+        getUpVideosNum,
         getOneGroupUpVideoInfo,
     }
 }

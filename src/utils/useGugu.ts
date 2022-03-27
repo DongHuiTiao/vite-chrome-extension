@@ -1,7 +1,7 @@
 import { computed, Ref, ref, watch } from 'vue';
 import { 
     getOneGroupFollows,
-    getUpVideoNum,
+    getUpVideosNum,
     getOneGroupUpVideoInfo,
     getMyInfo,
     UpInfo,
@@ -29,8 +29,8 @@ const initGugu = () => {
         currentGuguLength:undefined,
         averageGuguLength:undefined,
         maxGuguLength:undefined,
-        videoNum: -1,
-        currentHaveVideoNum: -1,
+        videosNum: -1,
+        currentHaveVideosNum: -1,
         guguLengthList: [],
     })
 
@@ -120,8 +120,8 @@ const initGugu = () => {
                         currentGuguLength,
                         averageGuguLength,
                         maxGuguLength,
-                        videoNum: guguLengthList.length,
-                        currentHaveVideoNum: guguLengthList.length,
+                        videosNum: guguLengthList.length,
+                        currentHaveVideosNum: guguLengthList.length,
                         guguLengthList,
                     }
                     followsGuguList.value[index] = gugu;
@@ -135,12 +135,12 @@ const initGugu = () => {
         // 获取 up 主制作的视频的数量
         let viedosInfoList = [];
         const num = await RequestQueue.reaquest<number>(
-           () => getUpVideoNum(mid),
+           () => getUpVideosNum(mid),
         )
-        guguRef.videoNum = num;
+        guguRef.videosNum = num;
         // 如果没有视频的话，直接返回空数组
         if (!num) return viedosInfoList;
-        guguRef.currentHaveVideoNum = 0;
+        guguRef.currentHaveVideosNum = 0;
 
         // 获取的最多页数
         const time = Math.ceil(num / 50);
@@ -156,7 +156,7 @@ const initGugu = () => {
                 continue;
             }
 
-            guguRef.currentHaveVideoNum += newList.length;
+            guguRef.currentHaveVideosNum += newList.length;
 
             viedosInfoList.push(...newList);
             currentPage++;
@@ -218,7 +218,7 @@ const initGugu = () => {
         }
         else {
             // 计算 followsIdList 差量
-            guguRef.videoNum = videosList.length;
+            guguRef.videosNum = videosList.length;
             const {
                 videosList: afterDiffList, 
                 isChange
@@ -235,7 +235,7 @@ const initGugu = () => {
             await Database.localStore.videosListStore.setItem(String(mid), videosList);
         }
         if (videosList.length === 0) {
-            guguRef.videoNum = 0;
+            guguRef.videosNum = 0;
         }
         // 计算 gugu
         const guguInfo = getGuguDetails(videosList);
@@ -364,7 +364,7 @@ const initGugu = () => {
     }
 
     // 排序相关
-    const sortType = ref<'' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videoNum'>('');
+    const sortType = ref<'' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videosNum'>('');
     // 是否加入自己
     const isAddSelf = ref<boolean>(false);
     // 排列顺序

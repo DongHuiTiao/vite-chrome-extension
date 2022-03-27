@@ -165,8 +165,8 @@ export const upGugu = ref<UpGugu>({
     currentGuguLength:undefined,
     averageGuguLength:undefined,
     maxGuguLength:undefined,
-    videoNum: -1,
-    currentHaveVideoNum: -1,
+    videosNum: -1,
+    currentHaveVideosNum: -1,
     guguLengthList: [],
 })
 

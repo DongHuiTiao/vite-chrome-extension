@@ -7,15 +7,15 @@ import { upGugu } from '../../../utils/up-space-gugu';
 import { computed } from 'vue';
 // 计算视频列表获取进度
 const progress = computed(() => {
-	if (upGugu.value.videoNum === -1) {
+	if (upGugu.value.videosNum === -1) {
 		return 0;
 	}
 
-	if (upGugu.value.videoNum === 0) {
+	if (upGugu.value.videosNum === 0) {
 		return 0;
 	}
 
-	const progress = Number(((upGugu.value.currentHaveVideoNum / upGugu.value.videoNum) * 100).toFixed(2));
+	const progress = Number(((upGugu.value.currentHaveVideosNum / upGugu.value.videosNum) * 100).toFixed(2));
 	return progress;
 });
 </script>

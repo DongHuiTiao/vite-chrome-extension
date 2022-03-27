@@ -20,11 +20,12 @@
 			<div class="videos-num" :style="{ width: guguHeadsMap['videosNum'].width + '%' }">
 				{{ up.guguLengthList.length }}
 			</div>
-			<template v-if="up.videoNum === -1">
+			<template v-if="up.videosNum === -1">
 				<div>等待获取中</div>
 			</template>
 			<template v-else>
-				<div v-if="up.videoNum === 0" class="no-videos" :style="{ width: noVideosWidth }">
+				<!-- TODO 如果 up 主在本地没数据，则用指引文案引导点击获取信息按钮 -->
+				<div v-if="up.videosNum === 0" class="no-videos" :style="{ width: noVideosWidth }">
 					这个 up 主还没有视频哦
 				</div>
 				<!-- up主有视频 -->
@@ -43,11 +44,11 @@
 					</template>
 					<!-- 没有结果，仍需获取和计算 -->
 					<div v-else class="no-videos" :style="{ width: noVideosWidth }">
-						<div>当前获取到的视频数量：{{ up.currentHaveVideoNum }}，共需要获取{{ up.videoNum }}</div>
+						<div>当前获取到的视频数量：{{ up.currentHaveVideosNum }}，共需要获取{{ up.videosNum }}</div>
 						<el-progress
 							:text-inside="true"
 							:stroke-width="26"
-							:percentage="getProgress(up.currentHaveVideoNum, up.videoNum)"
+							:percentage="getProgress(up.currentHaveVideosNum, up.videosNum)"
 							stroke-linecap="square"
 						/>
 					</div>
@@ -56,8 +57,10 @@
 			<!-- 操作区域 -->
 			<div class="operate-area" :style="{ width: guguHeadsMap['operateArea'].width + '%' }">
 				<!-- 加载按钮 -->
+				<!-- TODO 用合适的方法替代 -->
+				<el-button v-if="true" :icon="Download" size="small" circle @click.stop="refreshOneUpGugu(up)" />
 				<!-- 刷新按钮 -->
-				<el-button :icon="Refresh" size="small" circle @click.stop="refreshOneUpGugu(up)" />
+				<el-button v-else :icon="Refresh" size="small" circle @click.stop="refreshOneUpGugu(up)" />
 				<!-- 删除按钮 -->
 				<el-popconfirm title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
 					<template #reference>
@@ -72,7 +75,7 @@
 <script setup lang="ts">
 import { useGugu } from '../../utils/useGugu';
 import { getTimeDiff } from '../../utils/common/index';
-import { Delete, Refresh } from '@element-plus/icons-vue';
+import { Delete, Refresh, Download } from '@element-plus/icons-vue';
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 import { computed } from 'vue';
 
@@ -85,17 +88,16 @@ const noVideosWidth = computed(() => {
 });
 
 // 计算视频列表获取进度
-const getProgress = (currentNum: number, videoNum: number) => {
-	// const formatVideoNum = videoNum === -1 ? 0 : videoNum;
-	if (videoNum === -1) {
+const getProgress = (currentNum: number, videosNum: number) => {
+	if (videosNum === -1) {
 		return 0;
 	}
 
-	if (videoNum === 0) {
+	if (videosNum === 0) {
 		return 0;
 	}
 
-	return Number(((currentNum / videoNum) * 100).toFixed(2));
+	return Number(((currentNum / videosNum) * 100).toFixed(2));
 };
 
 // 跳转到 up 主的页面

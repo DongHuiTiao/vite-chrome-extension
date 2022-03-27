@@ -1,13 +1,13 @@
 import { videoApi  } from './api/video';
 import { sleep } from './common/index';
 
-const { getUpVideoNum, getOneGroupUpVideoInfo } = videoApi();
+const { getUpVideosNum, getOneGroupUpVideoInfo } = videoApi();
 
 export const useVideo = () => {
     // 获取up主全部视频信息的方法
     const getUpAllVideosInfo = async (mid) => {
         // 获取up主制作的视频的数量
-        const num = await getUpVideoNum(mid);
+        const num = await getUpVideosNum(mid);
         // 获取的最多页数
         const time = Math.ceil(num / 50);
         // 当前获取的页数
