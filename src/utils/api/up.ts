@@ -39,3 +39,9 @@ export const getMyInfo = async (mid: string): Promise<any> => {
 	return res.data.data;
 }
 
+// 获取 up 主关注了多少人
+export const getMyFollowsNum = async (mid: string): Promise<any> => {
+	const res = await axios.get(`https://api.bilibili.com/x/relation/stat?vmid=${mid}`);
+	return res.data.data.following;
+}
+

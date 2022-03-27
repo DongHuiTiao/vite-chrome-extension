@@ -1,14 +1,31 @@
 <template>
-	<div class="flex">
-		<!-- 展示托更数据结果 -->
-		<div class="gugu-table__show-result" :class="{ 'gugu-table__show-result--open__control': isShowControlDrawer }">
-			<!-- 表头 -->
-			<GuguTableHead />
-			<!-- 表身 -->
-			<GuguTableBody />
+	<div>
+		<!-- 如果正在获取初次加载 up 主的关注列表，则显示这个 -->
+		<div v-if="!isLocalHasFollowsInfo" class="gugu-table__loading-follows">
+			<div class="gugu-table__loading-follows__text">正在获取关注的 up 主列表</div>
+			<div class="gugu-table__loading-follows__progress">
+				<el-progress
+					:text-inside="true"
+					:stroke-width="26"
+					:percentage="getFollowsInfoListProgress"
+					stroke-linecap="square"
+				/>
+			</div>
 		</div>
-		<!-- 控制区域 -->
-		<GuguTableControl />
+		<!-- 展示托更数据结果 -->
+		<div v-else class="flex">
+			<div
+				class="gugu-table__show-result"
+				:class="{ 'gugu-table__show-result--open__control': isShowControlDrawer }"
+			>
+				<!-- 表头 -->
+				<GuguTableHead />
+				<!-- 表身 -->
+				<GuguTableBody />
+			</div>
+			<!-- 控制区域 -->
+			<GuguTableControl />
+		</div>
 	</div>
 </template>
 
@@ -18,7 +35,7 @@ import GuguTableHead from './gugu-table-head.vue';
 import GuguTableControl from './gugu-table-control.vue';
 import GuguTableBody from './gugu-table-body.vue';
 
-const { isShowControlDrawer } = useGugu();
+const { isShowControlDrawer, getFollowsInfoListProgress, isLocalHasFollowsInfo } = useGugu();
 </script>
 
 <style lang="less">
@@ -30,6 +47,20 @@ const { isShowControlDrawer } = useGugu();
 		transition: width 0.3s;
 		&--open__control {
 			width: 79%;
+		}
+	}
+	&__loading-follows {
+		height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+		&__text {
+			margin-bottom: 30px;
+			color: #bbbbbb;
+		}
+		&__progress {
+			width: 72%;
 		}
 	}
 }

@@ -5,6 +5,7 @@ import {
     getOneGroupUpVideoInfo,
     getMyInfo,
     UpInfo,
+    getMyFollowsNum,
 } from './api/up';
 import databaseFactory from './../database/index';
 import requestQueueFactory from './../request-queue/index'; 
@@ -57,9 +58,21 @@ const initGugu = () => {
         });
         handleOneGugu(Number(myMid), myGugu.value);
     };
+    const isLocalHasFollowsInfo = ref<boolean>(false);
+    const myFollowsInfoNums = ref<number>(0);
+    const currentHaveFollowsInfoNum = ref<number>(0);
+    const getFollowsInfoListProgress = computed(() => {
+        if (myFollowsInfoNums.value === 0) return 0;
+
+        return (currentHaveFollowsInfoNum.value / myFollowsInfoNums.value * 100).toFixed(2);
+    })
 
     // 获得我关注的 up 的 头像 昵称 Id
     const getAllFollowsInfoList = async (): Promise<UpInfo[]> => {
+        myFollowsInfoNums.value = await RequestQueue.reaquest<number>(
+            () => getMyFollowsNum(myMid)
+        );
+
         const followsInfoList = [];
         // 每次获取到的列表的长度
         let resultLength = -1;
@@ -71,6 +84,7 @@ const initGugu = () => {
                 () => getOneGroupFollows(Number(myMid), currentPage)
             )
             followsInfoList.push(...oneGroupFollowsInfo);
+            currentHaveFollowsInfoNum.value = followsInfoList.length;
             resultLength = oneGroupFollowsInfo.length;
             currentPage ++;
         }
@@ -83,6 +97,7 @@ const initGugu = () => {
         let followsInfoList: UpInfo[] = await Database.localStore.followsInfoList.getItem(myMid)
 
         if (followsInfoList) {
+            isLocalHasFollowsInfo.value = true;
             // 先把所有人的数据插入到页面上
             console.time('handleAllGugu');
             await updateAllFollowsGugu(followsInfoList);
@@ -91,6 +106,7 @@ const initGugu = () => {
         } 
         console.time('getAllFollowsInfoList')
         const newFollowsInfoList = await getAllFollowsInfoList();
+        isLocalHasFollowsInfo.value = true;
         console.timeEnd('getAllFollowsInfoList')
         await updateAllFollowsGugu(newFollowsInfoList);
         refreshShowGuguList();
@@ -431,7 +447,9 @@ const initGugu = () => {
         isAddSelf,
         sortOrder,
         userNameFilter,
-        isShowControlDrawer
+        isShowControlDrawer,
+        getFollowsInfoListProgress,
+        isLocalHasFollowsInfo
     }
 }
 
