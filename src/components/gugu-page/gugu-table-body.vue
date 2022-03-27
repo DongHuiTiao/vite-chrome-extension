@@ -25,7 +25,10 @@
 				{{ up.guguLengthList.length }}
 			</div>
 			<template v-if="up.videosNum === -1">
-				<div class="no-videos" :style="{ width: noVideosNumWidth }">等待获取中</div>
+				<!-- 引导用户点击获取按钮 -->
+				<div class="no-videos" :style="{ width: noVideosNumWidth }">
+					点击 那里的 👉 <el-icon><Download /></el-icon> 即可获取 up 主咕咕数据
+				</div>
 			</template>
 			<template v-else>
 				<!-- TODO 如果 up 主在本地没数据，则用指引文案引导点击获取信息按钮 -->
@@ -64,9 +67,12 @@
 			<div class="operate-area" :style="{ width: guguHeadsMap['operateArea'].width + '%' }">
 				<!-- 加载按钮 -->
 				<!-- TODO 用合适的方法替代 -->
-				<el-button v-if="true" :icon="Download" size="small" circle @click.stop="refreshOneUpGugu(up)" />
-				<!-- 刷新按钮 -->
-				<el-button v-else :icon="Refresh" size="small" circle @click.stop="refreshOneUpGugu(up)" />
+				<el-button
+					:icon="up.videosNum === -1 ? Download : Refresh"
+					size="small"
+					circle
+					@click.stop="refreshOneUpGugu(up)"
+				/>
 				<!-- 删除按钮 -->
 				<el-popconfirm title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
 					<template #reference>

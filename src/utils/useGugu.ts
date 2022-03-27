@@ -94,7 +94,7 @@ const initGugu = () => {
     // 获取我关注的 up 的 gugu 列表
     const getFollowsGuguList = async () => {
         // 查看本地的 followsIdList 是否为空
-        let followsInfoList: UpInfo[] = await Database.localStore.followsInfoList.getItem(myMid)
+        let followsInfoList: UpInfo[] = await Database.localStore.followsInfoList.getItem(myMid);
 
         if (followsInfoList) {
             isLocalHasFollowsInfo.value = true;
@@ -114,9 +114,9 @@ const initGugu = () => {
         // 更新本地数据
         await Database.localStore.followsInfoList.setItem(myMid, newFollowsInfoList);
 
-        for(let upGugu of followsGuguList.value) {
-            await handleOneGugu(upGugu.mid, upGugu);
-        }
+        // for(let upGugu of followsGuguList.value) {
+        //     await handleOneGugu(upGugu.mid, upGugu);
+        // }
     }
 
     // 把所有本地的 up 主的咕咕信息显示到页面上
