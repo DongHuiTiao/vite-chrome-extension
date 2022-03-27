@@ -108,6 +108,15 @@ const initGugu = () => {
         return Promise.all(followsInfoList.map((upInfo, index) => {
             return Database.localStore.guguStore.getItem(String(upInfo.mid)).then(upGugu => {
                 // 如果有的话
+                const gugu = {
+                    ...upInfo,
+                    currentGuguLength:undefined,
+                    averageGuguLength:undefined,
+                    maxGuguLength:undefined,
+                    videosNum: -1,
+                    currentHaveVideosNum: -1,
+                    guguLengthList: [],
+                }
                 if (upGugu) {
                     const {
                         currentGuguLength,
@@ -115,17 +124,18 @@ const initGugu = () => {
                         maxGuguLength,
                         guguLengthList,
                     } = upGugu as UpGugu;
-                    const gugu = {
-                        ...upInfo,
+
+                    Object.assign(gugu, {
                         currentGuguLength,
                         averageGuguLength,
                         maxGuguLength,
+                        guguLengthList,
                         videosNum: guguLengthList.length,
                         currentHaveVideosNum: guguLengthList.length,
-                        guguLengthList,
-                    }
-                    followsGuguList.value[index] = gugu;
+                    })
+                    
                 }
+                followsGuguList.value[index] = gugu;
             });
         }))
     }

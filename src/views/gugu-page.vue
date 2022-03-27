@@ -1,5 +1,4 @@
 <template>
-	<!-- TODO 优化样式 -->
 	<div>
 		<!-- 按钮 -->
 		<el-button @click="open">查看 up 咕咕数据</el-button>

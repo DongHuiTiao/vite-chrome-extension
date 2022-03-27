@@ -17,11 +17,15 @@
 			<!-- 昵称 -->
 			<div class="nick-name" :style="{ width: guguHeadsMap['nickName'].width + '%' }">{{ up.uname }}</div>
 			<!-- 视频数量 -->
-			<div class="videos-num" :style="{ width: guguHeadsMap['videosNum'].width + '%' }">
+			<div
+				v-if="up.videosNum !== -1"
+				class="videos-num"
+				:style="{ width: guguHeadsMap['videosNum'].width + '%' }"
+			>
 				{{ up.guguLengthList.length }}
 			</div>
 			<template v-if="up.videosNum === -1">
-				<div>等待获取中</div>
+				<div class="no-videos" :style="{ width: noVideosNumWidth }">等待获取中</div>
 			</template>
 			<template v-else>
 				<!-- TODO 如果 up 主在本地没数据，则用指引文案引导点击获取信息按钮 -->
@@ -44,13 +48,15 @@
 					</template>
 					<!-- 没有结果，仍需获取和计算 -->
 					<div v-else class="no-videos" :style="{ width: noVideosWidth }">
-						<div>当前获取到的视频数量：{{ up.currentHaveVideosNum }}，共需要获取{{ up.videosNum }}</div>
-						<el-progress
-							:text-inside="true"
-							:stroke-width="26"
-							:percentage="getProgress(up.currentHaveVideosNum, up.videosNum)"
-							stroke-linecap="square"
-						/>
+						<div style="width: 100%">
+							<div>当前获取到的视频数量：{{ up.currentHaveVideosNum }}，共需要获取{{ up.videosNum }}</div>
+							<el-progress
+								:text-inside="true"
+								:stroke-width="26"
+								:percentage="getProgress(up.currentHaveVideosNum, up.videosNum)"
+								stroke-linecap="square"
+							/>
+						</div>
 					</div>
 				</template>
 			</template>
@@ -84,6 +90,15 @@ const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList } = useGu
 const noVideosWidth = computed(() => {
 	const width =
 		guguHeadsMap.currentGuguLength.width + guguHeadsMap.averageGuguLength.width + guguHeadsMap.maxGuguLength.width;
+	return width + '%';
+});
+
+const noVideosNumWidth = computed(() => {
+	const width =
+		guguHeadsMap.videosNum.width +
+		guguHeadsMap.currentGuguLength.width +
+		guguHeadsMap.averageGuguLength.width +
+		guguHeadsMap.maxGuguLength.width;
 	return width + '%';
 });
 
@@ -128,6 +143,7 @@ const toUpPage = (mid: number) => {
 }
 .no-videos {
 	.gugu-table-body-col-style();
+	color: #cecdcd;
 }
 .index {
 	.gugu-table-body-col-style();
