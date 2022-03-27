@@ -47,8 +47,10 @@ for (const key in guguHeadsWidth) {
         rightPress: false,
         width,
         minWidth: width - 5,
-        maxWidth: width + 5,
+        // XXX 这个字段可能没用了
+        maxWidth: 100,
     }
+
     index ++;
 }
 
@@ -141,11 +143,12 @@ const changeRightConfigWidth = (newX: number) => {
 
 	guguHeadsMap[pressuring.value].width = newHeadWidthPercentage;
     guguHeadsList[index + 1].width -= diff;
+    getLastHeadWidth();
 };
 
 // 修改左边的宽度
 const changeLeftConfigWidth = (newX: number) => {
-    // TODO 给 最右边的列增加宽度
+    // TODO 给 最左边的列增加宽度
     if (!pressuring.value) {
         return;
     }
@@ -182,17 +185,17 @@ const changeLeftConfigWidth = (newX: number) => {
 		newHeadWidthPercentage = originHeadMaxWidth;
 	}
 
+    let diff = newHeadWidthPercentage -  originHeadWidth;
+
     const leftHead = guguHeadsList[index - 1];
     const leftHeadWidth = leftHead.width;
     const leftHeadMinWidth = leftHead.minWidth;
     const leftHeadMaxWidth = leftHead.maxWidth;
 
-    let diff = newHeadWidthPercentage -  originHeadWidth;
     if (leftHeadWidth - diff < leftHeadMinWidth) {
         diff = leftHeadWidth - leftHeadMinWidth;
         newHeadWidthPercentage = originHeadWidth + diff;
     }
-
     if (leftHeadWidth - diff > leftHeadMaxWidth) {
         diff = leftHeadMaxWidth - leftHeadWidth;
         newHeadWidthPercentage = originHeadWidth - diff;
@@ -200,4 +203,15 @@ const changeLeftConfigWidth = (newX: number) => {
 
 	guguHeadsMap[pressuring.value].width = newHeadWidthPercentage;
     guguHeadsList[index - 1].width -= diff;
+    getLastHeadWidth();
+}
+
+const getLastHeadWidth = () => {
+    let beforeWidth = 0;
+    for (let i = 0; i < guguHeadsList.length - 1; i++) {
+        beforeWidth += guguHeadsList[i].width;
+        console.log(guguHeadsList[i].key, guguHeadsList[i].width);
+    };
+    guguHeadsList[guguHeadsList.length - 1].width = 100 - beforeWidth;
+    console.log('最后一项的宽度是', 100 - beforeWidth);
 }

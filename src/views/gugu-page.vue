@@ -44,7 +44,6 @@ const open = async () => {
 	document.getElementsByTagName('body')[0].style.overflow = 'hidden';
 	// 继续请求观众数据
 	visible.value = true;
-	console.log('？？');
 	init();
 };
 
