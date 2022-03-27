@@ -11,7 +11,7 @@ import databaseFactory from './../database/index';
 import requestQueueFactory from './../request-queue/index'; 
 import { getMyMid } from './common';
 import { VideoInfo, UpGugu, GuguLength, OneGroupVideoInfo, OneGroupVideoInfoCode } from './type';
-
+import { ElMessage } from 'element-plus';
 const Database = databaseFactory();
 const RequestQueue = requestQueueFactory();
 
@@ -152,7 +152,7 @@ const initGugu = () => {
         }))
     }
 
-    const isBatchRequesting = ref<boolean>(false);
+    const isBatchRequesting = ref<string>('');
     const fetchMode = ref<string>('single');
     // 获取 up 主全部视频信息的方法
     const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<VideoInfo[] | undefined>  => {
@@ -203,6 +203,12 @@ const initGugu = () => {
         let currentPage = 1;
         let newVideosList = [];
         do {
+            if (fetchMode.value === 'batch' && !isBatchRequesting.value) {
+                return {
+                    videosList: undefined,
+                    isChange
+                };
+            }
             const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
                 () => getOneGroupUpVideoInfo(Number(mid), currentPage)
             );
@@ -259,6 +265,11 @@ const initGugu = () => {
                 isChange
             } = await getVideosListDiff(mid, videosList);
             
+            if (!afterDiffList) {
+                handlingMid.value = -1;
+                return false;
+            }
+
             if(isChange) {
                 isVideosListChange = true;
                 videosList = afterDiffList;
@@ -284,7 +295,7 @@ const initGugu = () => {
 
     // 批量获取剩余 up 主的咕咕信息
     const batchFetchRemainGugu = async () => {
-        isBatchRequesting.value = true;
+        isBatchRequesting.value = 'batchFetchRemainGugu';
         fetchMode.value = 'batch';
         const remainGuguList = followsGuguList.value.filter(up => {
             return up.videosNum === -1;
@@ -296,16 +307,24 @@ const initGugu = () => {
                 break;
             } 
         }
+        isBatchRequesting.value = '';
     }
 
     // 批量刷新已获取的 up 主的咕咕信息
     const batchRefreshGugu = async () => {
+        isBatchRequesting.value = 'batchRefreshGugu';
+        fetchMode.value = 'batch';
         const doneGuguList = followsGuguList.value.filter(up => {
             return up.videosNum !== -1;
         });
         for(let upGugu of doneGuguList) {
-            await handleOneGugu(upGugu.mid, upGugu);
+            const isContinue = await handleOneGugu(upGugu.mid, upGugu);
+            if (!isContinue) {
+                fetchMode.value = 'single';
+                break;
+            } 
         }
+        isBatchRequesting.value = '';
     }
 
     // 获取 up 咕咕三个数据
@@ -411,17 +430,18 @@ const initGugu = () => {
 
         followsGuguList.value.splice(removeIndex, 1);
         refreshShowGuguList();
-        // TODO 要显示通知
-        // ElMessage({
-        //     message: '已从本地删除该 up 主的信息',
-        //     type: 'success',
-        // })
+        // 要显示通知
+        ElMessage({
+            message: '已从本地删除该 up 主的信息',
+            type: 'success',
+        })
     }
 
     // 抽屉相关的功能
     const isShowControlDrawer = ref<boolean>(true);
 
     const refreshOneUpGugu = async (up: UpGugu) => {
+        // TODO 顶替下载
         const mid = up.mid;
         await handleOneGugu(mid, up);
     }
