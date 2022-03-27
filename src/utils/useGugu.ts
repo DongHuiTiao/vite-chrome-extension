@@ -232,9 +232,10 @@ const initGugu = () => {
             isChange
         }
     }
-
+    const handlingMid = ref<number>(-1);
     // 将 up 主的 咕咕信息 加载到 前端
     const handleOneGugu = async (mid: number, guguRef: UpGugu) => {
+        handlingMid.value = mid;
         // 查看本地是否有 gugu
         // 当前 up 在本地的视频列表
         let videosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(String(mid));
@@ -244,7 +245,10 @@ const initGugu = () => {
             // 请求全部 videosList
             videosList = await getUpAllVideosList(mid, guguRef);
             // 如果被中断了请求，则停止处理
-            if (!videosList) return false;
+            if (!videosList) {
+                handlingMid.value = -1;
+                return false;
+            }
             isVideosListChange = true;
         }
         else {
@@ -274,6 +278,7 @@ const initGugu = () => {
         await Database.localStore.guguStore.setItem(String(mid), guguInfo);
         // 更新 guguRef
         Object.assign(guguRef, guguInfo);
+        handlingMid.value = -1;
         return true;
     }
 
@@ -509,6 +514,7 @@ const initGugu = () => {
         isBatchRequesting,
         batchFetchRemainGugu,
         batchRefreshGugu,
+        handlingMid,
     }
 }
 

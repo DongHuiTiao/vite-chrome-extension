@@ -3,7 +3,12 @@
 		<li
 			v-for="(up, index) in showGuguList"
 			:key="index"
+			v-loading="handlingMid === up.mid"
 			class="flex align-center up-item"
+			element-loading-text="正在更新咕咕数据中..."
+			:element-loading-spinner="svg"
+			element-loading-svg-view-box="-10, -10, 50, 50"
+			style="width: 100%"
 			@click="toUpPage(up.mid)"
 		>
 			<!-- 序号 -->
@@ -89,13 +94,24 @@ import { Delete, Refresh, Download } from '@element-plus/icons-vue';
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 import { computed } from 'vue';
 
-const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList } = useGugu();
+const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList, handlingMid } = useGugu();
 
 const noVideosWidth = computed(() => {
 	const width =
 		guguHeadsMap.currentGuguLength.width + guguHeadsMap.averageGuguLength.width + guguHeadsMap.maxGuguLength.width;
 	return width + '%';
 });
+
+const svg = `
+        <path class="path" d="
+          M 30 15
+          L 28 17
+          M 25.61 25.61
+          A 15 15, 0, 0, 1, 15 30
+          A 15 15, 0, 1, 1, 27.99 7.5
+          L 15 15
+        " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
+      `;
 
 const noVideosNumWidth = computed(() => {
 	const width =
