@@ -73,7 +73,7 @@
 					circle
 					@click.stop="refreshOneUpGugu(up)"
 				/>
-				<!-- TODO 取消按钮 -->
+				<!-- 取消按钮 -->
 				<el-button
 					v-else
 					:icon="CircleClose"

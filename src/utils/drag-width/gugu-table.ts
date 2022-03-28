@@ -47,7 +47,6 @@ for (const key in guguHeadsWidth) {
         rightPress: false,
         width,
         minWidth: width - 5,
-        // XXX 这个字段可能没用了
         maxWidth: 100,
     }
 
