@@ -107,10 +107,11 @@ const initGugu = () => {
     const refreshFollowsGuguList = async () => {
         // 停止获取
         isBatchRequesting.value = '';
+        isSingleRequesting.value = false;
         fetchMode.value = 'single';
         isLocalHasFollowsInfo.value = false;
         const followsInfoList = await getAllFollowsInfoList();
-        await donefollowsGuguInfo(followsInfoList)
+        await donefollowsGuguInfo(followsInfoList);
     }
 
     // 完成关注列表的处理
@@ -159,6 +160,7 @@ const initGugu = () => {
     }
 
     const isBatchRequesting = ref<string>('');
+    const isSingleRequesting = ref<boolean>(false);
     const fetchMode = ref<string>('single');
     // 获取 up 主全部视频信息的方法
     const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<VideoInfo[] | undefined>  => {
@@ -178,7 +180,11 @@ const initGugu = () => {
         let currentPage = 1;
         // 当前页数少于最多页数时，请求数据
         while (currentPage <= time) {
-            if (fetchMode.value === 'batch' && !isBatchRequesting.value) {
+            // 如果批量请求被终止了 或 单个请求被终止了
+            if (
+                fetchMode.value === 'batch' && !isBatchRequesting.value ||
+                fetchMode.value === 'single' && !isSingleRequesting.value
+            ) {
                 guguRef.videosNum = -1;
                 guguRef.currentHaveVideosNum = -1;
                 return;
@@ -209,7 +215,10 @@ const initGugu = () => {
         let currentPage = 1;
         let newVideosList = [];
         do {
-            if (fetchMode.value === 'batch' && !isBatchRequesting.value) {
+            if (
+                fetchMode.value === 'batch' && !isBatchRequesting.value ||
+                fetchMode.value === 'single' && !isSingleRequesting.value
+            ) {
                 return {
                     videosList: undefined,
                     isChange
@@ -296,38 +305,93 @@ const initGugu = () => {
         return true;
     }
 
+    // 剩余需要获取的 up 主的数量
+    const remainGuguListLength = ref<number>(-1);
+    // 当前获取到了几个剩余的 up 主
+    const currentDoneRemainNum = ref<number>(0);
+
+    // 当前批量操作的进度, -1 则不显示进度条,表示没有进行批量操作
+    const batchFetchRemainGuguProgress = computed(() => {
+        // 如果不是批量操作,则不显示进度条
+        if ( isBatchRequesting.value === '' || fetchMode.value === 'single' ) {
+            return -1;
+        }
+
+        if (remainGuguListLength.value === -1) {
+            return -1;
+        }
+
+        const progress = ((currentDoneRemainNum.value / remainGuguListLength.value) * 100).toFixed(2);
+        return progress;
+    })
+
     // 批量获取剩余 up 主的咕咕信息
     const batchFetchRemainGugu = async () => {
+        // 调整状态
         isBatchRequesting.value = 'batchFetchRemainGugu';
         fetchMode.value = 'batch';
+        // 获得剩余的 up 主
+        currentDoneRemainNum.value = 0;
         const remainGuguList = followsGuguList.value.filter(up => {
             return up.videosNum === -1;
-        })
+        });
+
+        // 如果没有剩余的 up 主了,则返回
+        if (remainGuguList.length === 0) {
+            return;
+        }
+
+        remainGuguListLength.value = remainGuguList.length;
+
+        // 逐个的获取 up 主信息
         for(let upGugu of remainGuguList) {
             const isContinue = await handleOneGugu(upGugu.mid, upGugu);
             if (!isContinue) {
+                // 恢复默认状态
                 fetchMode.value = 'single';
                 break;
-            } 
-        }
+            }
+            currentDoneRemainNum.value ++;
+        };
+        // 完成批量操作
         isBatchRequesting.value = '';
+        isSingleRequesting.value = false;
+        remainGuguListLength.value = -1;
+        currentDoneRemainNum.value = 0;
     }
 
     // 批量刷新已获取的 up 主的咕咕信息
     const batchRefreshGugu = async () => {
+        // 调整状态
         isBatchRequesting.value = 'batchRefreshGugu';
         fetchMode.value = 'batch';
+        // 获得已获取信息的 up 主
+        currentDoneRemainNum.value = 0;
         const doneGuguList = followsGuguList.value.filter(up => {
             return up.videosNum !== -1;
         });
+
+        // 如果还没有已获取的 up 主, 则返回
+        if (doneGuguList.length === 0) {
+            return;
+        }
+
+        remainGuguListLength.value = doneGuguList.length;
+
         for(let upGugu of doneGuguList) {
             const isContinue = await handleOneGugu(upGugu.mid, upGugu);
             if (!isContinue) {
+                // 恢复默认状态
                 fetchMode.value = 'single';
                 break;
-            } 
+            }
+            currentDoneRemainNum.value ++;
         }
+        // 完成批量操作
         isBatchRequesting.value = '';
+        remainGuguListLength.value = -1;
+        isSingleRequesting.value = false;
+        currentDoneRemainNum.value = 0;
     }
 
     // 获取 up 咕咕三个数据
@@ -418,6 +482,14 @@ const initGugu = () => {
 
     // 从本地的 indexedDB 中删除该 up 主的记录
     const deleteUpGugu = async (up: UpGugu) => {
+        if (isBatchRequesting.value !== '') {
+            ElMessage.error('无法删除, 请先取消批量操作');
+            return;
+        }
+        if (handlingMid.value === up.mid) {
+            ElMessage.error('正在更新该 up 的数据, 不可删除');
+            return;
+        }
         const upMid = String(up.mid);
         await Database.localStore.videosListStore.removeItem(upMid)
         // 全部结束之后，从视图中删除该 up 主
@@ -438,11 +510,23 @@ const initGugu = () => {
     const isShowControlDrawer = ref<boolean>(true);
 
     const refreshOneUpGugu = async (up: UpGugu) => {
-        // TODO 顶替下载
+        if (handlingMid.value !== -1 && handlingMid.value !== up.mid) {
+            ElMessage.error('正在获取其他 up 主数据, 请先取消再来获取');
+            return;
+        }
         const mid = up.mid;
+        isSingleRequesting.value = true;
+        fetchMode.value = 'single';
         await handleOneGugu(mid, up);
+        isSingleRequesting.value = false;
     }
 
+    // 取消刷新
+    
+    const cancelRefresh = () => {
+        isSingleRequesting.value = false;
+        isBatchRequesting.value = '';
+    };
     // 排序相关
     const sortType = ref<'' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videosNum'>('');
     // 是否加入自己
@@ -531,6 +615,11 @@ const initGugu = () => {
         batchRefreshGugu,
         refreshFollowsGuguList,
         handlingMid,
+        remainGuguListLength,
+        currentDoneRemainNum,
+        batchFetchRemainGuguProgress,
+        isSingleRequesting,
+        cancelRefresh,
     }
 }
 

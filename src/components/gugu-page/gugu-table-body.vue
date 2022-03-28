@@ -67,11 +67,21 @@
 			<div class="operate-area" :style="{ width: guguHeadsMap['operateArea'].width + '%' }">
 				<!-- 加载按钮 -->
 				<el-button
+					v-if="handlingMid !== up.mid"
 					:icon="up.videosNum === -1 ? Download : Refresh"
 					size="small"
 					circle
 					@click.stop="refreshOneUpGugu(up)"
 				/>
+				<!-- TODO 取消按钮 -->
+				<el-button
+					v-else
+					:icon="CircleClose"
+					size="small"
+					circle
+					type="warning"
+					@click.stop="cancelRefresh"
+				></el-button>
 				<!-- 删除按钮 -->
 				<el-popconfirm title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
 					<template #reference>
@@ -86,11 +96,13 @@
 <script setup lang="ts">
 import { useGugu } from '../../utils/useGugu';
 import { getTimeDiff } from '../../utils/common/index';
-import { Delete, Refresh, Download } from '@element-plus/icons-vue';
+import { Delete, Refresh, Download, CircleClose } from '@element-plus/icons-vue';
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 import { computed } from 'vue';
 
-const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList, handlingMid } = useGugu();
+// TODO 自动跟踪批量中正在处理的 up 主
+
+const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList, handlingMid, cancelRefresh } = useGugu();
 
 const noVideosWidth = computed(() => {
 	const width =
