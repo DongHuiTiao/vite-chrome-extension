@@ -99,15 +99,11 @@ const initGugu = () => {
         if (followsInfoList) {
             isLocalHasFollowsInfo.value = true;
             // 先把所有人的数据插入到页面上
-            console.time('handleAllGugu');
             await updateAllFollowsGugu(followsInfoList);
             refreshShowGuguList();
-            console.timeEnd('handleAllGugu');
         } 
-        console.time('getAllFollowsInfoList')
         const newFollowsInfoList = await getAllFollowsInfoList();
         isLocalHasFollowsInfo.value = true;
-        console.timeEnd('getAllFollowsInfoList')
         await updateAllFollowsGugu(newFollowsInfoList);
         refreshShowGuguList();
     
@@ -118,7 +114,7 @@ const initGugu = () => {
     // 把所有本地的 up 主的咕咕信息显示到页面上
     const updateAllFollowsGugu = (followsInfoList: UpInfo[]) => {
         return Promise.all(followsInfoList.map((upInfo, index) => {
-            return Database.localStore.guguStore.getItem(String(upInfo.mid)).then(upGugu => {
+            return Database.localStore.videosListStore.getItem(String(upInfo.mid)).then(videosList => {
                 // 如果有的话
                 const gugu = {
                     ...upInfo,
@@ -129,14 +125,14 @@ const initGugu = () => {
                     currentHaveVideosNum: -1,
                     guguLengthList: [],
                 }
-                if (upGugu) {
+                if (videosList) {
                     const {
                         currentGuguLength,
                         averageGuguLength,
                         maxGuguLength,
                         guguLengthList,
-                    } = upGugu as UpGugu;
-
+                    } = getGuguDetails(videosList as VideoInfo[]);
+                    
                     Object.assign(gugu, {
                         currentGuguLength,
                         averageGuguLength,
@@ -145,7 +141,6 @@ const initGugu = () => {
                         videosNum: guguLengthList.length,
                         currentHaveVideosNum: guguLengthList.length,
                     })
-                    
                 }
                 followsGuguList.value[index] = gugu;
             });
@@ -285,8 +280,6 @@ const initGugu = () => {
         }
         // 计算 gugu
         const guguInfo = getGuguDetails(videosList);
-        // 更新本地的 gugu
-        await Database.localStore.guguStore.setItem(String(mid), guguInfo);
         // 更新 guguRef
         Object.assign(guguRef, guguInfo);
         handlingMid.value = -1;
@@ -398,6 +391,7 @@ const initGugu = () => {
             // 如果是最后一个视频
             return {
                 bvid,
+                created,
                 guguLength: end - start,
             };
         });
@@ -415,14 +409,7 @@ const initGugu = () => {
     // 从本地的 indexedDB 中删除该 up 主的记录
     const deleteUpGugu = async (up: UpGugu) => {
         const upMid = String(up.mid);
-        await Promise.all([
-            Database.localStore.guguStore.removeItem(upMid, () => {
-                console.log(upMid, '已从本地删除 guguStore');
-            }),
-            Database.localStore.videosListStore.removeItem(upMid, () => {
-                console.log(upMid, '已从本地删除 videosListStore');
-            }),
-        ])
+        await Database.localStore.videosListStore.removeItem(upMid)
         // 全部结束之后，从视图中删除该 up 主
         const removeIndex = followsGuguList.value.findIndex(currentUp => {
             return currentUp.mid === up.mid;
@@ -492,9 +479,7 @@ const initGugu = () => {
     });
 
     watch([sortType, isAddSelf, sortOrder, userNameFilter, isHideUnFetchUp, isHideNoVideosUp], () => {
-        console.time('refreshShowGuguList');
         refreshShowGuguList();
-        console.timeEnd('refreshShowGuguList')
     })
 
     // 展示出来的 up 主列表

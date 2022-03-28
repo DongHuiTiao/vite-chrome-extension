@@ -1,6 +1,5 @@
 export interface LocalStore<T> {
     followsInfoList: T,
-    guguStore: T,
     videosListStore: T,
 }
 
