@@ -5,40 +5,6 @@
 			{{ isShowControlDrawer ? '关闭面板' : '打开面板' }}
 		</div>
 		<div class="control">
-			<el-divider content-position="center">批量操作</el-divider>
-			<div class="gugu-table__drawer__batch-operate">
-				<el-popover
-					placement="top-start"
-					:width="200"
-					trigger="hover"
-					content="一键自动获取剩余 up 主的咕咕数据"
-				>
-					<template #reference>
-						<el-button v-if="isBatchRequesting !== 'batchFetchRemainGugu'" @click="batchFetchRemainGugu"
-							>一键获取剩余 up 主</el-button
-						>
-						<el-button v-else type="danger" @click="isBatchRequesting = ''">终止获取</el-button>
-					</template>
-				</el-popover>
-			</div>
-			<div class="gugu-table__drawer__batch-operate">
-				<el-popover
-					placement="top-start"
-					:width="200"
-					trigger="hover"
-					content="一键刷新已获取的 up 主的咕咕数据"
-				>
-					<template #reference>
-						<el-button v-if="isBatchRequesting !== 'batchRefreshGugu'" @click="batchRefreshGugu"
-							>一键刷新已获取 up 主</el-button
-						>
-						<el-button v-else type="danger" @click="isBatchRequesting = ''">终止获取</el-button>
-					</template>
-				</el-popover>
-			</div>
-			<div class="gugu-table__drawer__batch-operate">
-				<el-button @click="refreshFollowsGuguList">刷新关注的 up 主列表</el-button>
-			</div>
 			<el-divider content-position="center">排序</el-divider>
 			<el-select v-model="sortType" class="m-2" placeholder="选择排序方式">
 				<el-option v-for="item in sortTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
@@ -59,25 +25,18 @@
 
 			<el-divider content-position="center">搜索 up 主</el-divider>
 			<el-input v-model="userNameFilter"></el-input>
+
+			<el-divider content-position="center">批量操作</el-divider>
+			<GuguTableControlBatch />
 		</div>
 	</div>
 </template>
 
 <script setup>
 import { useGugu } from '../../utils/useGugu';
-const {
-	sortType,
-	isAddSelf,
-	sortOrder,
-	userNameFilter,
-	isShowControlDrawer,
-	isHideUnFetchUp,
-	isHideNoVideosUp,
-	isBatchRequesting,
-	batchFetchRemainGugu,
-	batchRefreshGugu,
-	refreshFollowsGuguList,
-} = useGugu();
+import GuguTableControlBatch from './gugu-table-control-batch.vue';
+const { sortType, isAddSelf, sortOrder, userNameFilter, isShowControlDrawer, isHideUnFetchUp, isHideNoVideosUp } =
+	useGugu();
 const sortTypeOptions = [
 	{
 		label: '不排序',
@@ -139,9 +98,6 @@ const sortTypeOptions = [
 		&:hover {
 			background-color: rgb(245, 245, 245);
 		}
-	}
-	&__batch-operate {
-		margin-top: 15px;
 	}
 }
 </style>
