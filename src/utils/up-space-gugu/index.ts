@@ -1,15 +1,5 @@
-/**
- * 开启定时器检查视频列表是否加载
- * 如果视频列表加载了，查看本地是否有该 up 主的 gugu 数据
- * 如果有 gugu 数据的话
-    * 获取视频列表的元素
-    * 遍历 插入 dom 显示 咕咕 数据
- * 如果没有 gugu 数据
- *    增加一个刷新咕咕数据的 按钮
- *    点击按钮，调用 useGugu 里的逻辑把up的视频数据和计算结果存到本地
- *    再调用刚刚 有gugu 数据的情况
- */
-import { UpGugu } from '../type';
+
+import { UpGugu, VideoInfo } from '../type';
 import databaseFactory from '../../database/index';
 import { getTimeDiff } from '../common/index';
 import SpaceGuguSwitch from '../../components/gugu-page/up-space/space-gugu-switch.vue';
@@ -18,7 +8,7 @@ import { createApp, ref } from 'vue';
 import { useGugu } from './../useGugu';
 
 const Database = databaseFactory();
-const { getUpAllVideosList, getGuguDetails } = useGugu(); 
+const { getUpAllVideosList, getGuguDetails, isSingleRequesting } = useGugu(); 
 export const isOpen = ref<boolean>(false);
 
 enum IsOpenState {
@@ -26,6 +16,7 @@ enum IsOpenState {
     False = '',
 }
 
+// 改变是否展示个人页面的咕咕功能
 export const changIsOpen = (isOpen: boolean): void => {
 	if (isOpen) {
 		// 页面上渲染出来
@@ -35,6 +26,7 @@ export const changIsOpen = (isOpen: boolean): void => {
 	}
 	// 关闭页面上的东西
 	removeGuguTag();
+    removeVideosListListener();
     localStorage.setItem('is_open', IsOpenState.False);
 };
 
@@ -55,6 +47,7 @@ export const onPageOpen = () => {
     }
 }
 
+// 增加开关
 const addSwitch = () => {
     const dom = document.querySelector('.be-tab-inner.clearfix');
     const newElement =document.createElement('li');
@@ -67,6 +60,7 @@ const addSwitch = () => {
     spaceGuguSwitch.mount('#space-gugu-switch')
 }
 
+// 增加进度条
 const addProgress = () => {
     const dom = document.querySelector('.be-tab-inner.clearfix');
     const newElement =document.createElement('li');
@@ -84,10 +78,12 @@ const addProgress = () => {
     spaceGuguProgress.mount('#space-gugu-progress');
 }
 
+// 移除进度条
 const removeProgress = () => {
     document.getElementById('space-gugu-progress').remove();
 }
 
+// 检查是否是因为 hover 事件导致的 视频列表更新
 const getIsHoverGuguData = (coverElement: Element): boolean => {
     if (coverElement.className !== 'cover') {
         return false;
@@ -108,10 +104,11 @@ const getIsHoverGuguData = (coverElement: Element): boolean => {
     return !!isHoverGuguData;
 }
 
-
+// 视频列表还没有更新完的时候,不运行 刷新咕咕数据功能
 let stopContinue = null;
 
-// 当视频列表发生变动时运行的函数
+// TODO 这个可以做一期视频
+// 视频列表发生变化,则运行这个函数
 const onVideosListChange = async (e: any) => {
     const isHoverGuguData = getIsHoverGuguData(e.path[1]);
 
@@ -144,6 +141,7 @@ const onVideosListChange = async (e: any) => {
     onLoad();
 }
 
+// 增加视频列表变化的监听器
 const addVideosListListener = () => {
     if (!isOpen.value) {
         return;
@@ -153,11 +151,13 @@ const addVideosListListener = () => {
     dom.addEventListener('DOMNodeInserted', onVideosListChange);
 }
 
+// 移除视频列表变化的监听器
 const removeVideosListListener = () => {
     const dom = document.querySelector('.clearfix.cube-list');
     dom.removeEventListener('DOMNodeInserted', onVideosListChange);
 }
 
+// 当前页面 up 主的咕咕信息,用于查看进度条和显示数据
 export const upGugu = ref<UpGugu>({
     mid: 0, 
     uname: '',
@@ -170,17 +170,18 @@ export const upGugu = ref<UpGugu>({
     guguLengthList: [],
 })
 
-// 页面加载完时运行
+// 刷新咕咕数据
 export const onLoad = async () => {
     // removeGuguTag();
     // 查看本地是否有 up 主 的 gugu 数据
     removeVideosListListener();
     const upMid = getUpMid();
-    const upGuguData: UpGugu = await Database.localStore.guguStore.getItem(upMid);
-    if (upGuguData) {
+    const localVideosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(upMid);
+    if (localVideosList) {
         // 把每个视频的 拖更时间 插入到 dom 中
         // 把三个 gugu 数据展示到页面上
-        insertGuguDataToDom(upGuguData as UpGuguData);
+        const upGuguData = getGuguDetails(localVideosList)
+        insertGuguDataToDom(upGuguData);
         addVideosListListener();
         return;
     }
@@ -188,19 +189,20 @@ export const onLoad = async () => {
     addProgress();
 
     // 获得用户的视频
+    isSingleRequesting.value = true;
     const videosList = await getUpAllVideosList(Number(upMid), upGugu.value);
+    isSingleRequesting.value = false;
     
     removeProgress();
 
     await Database.localStore.videosListStore.setItem(upMid, videosList);
     // 获得咕咕数据
     const guguInfo = getGuguDetails(videosList);
-    // 把数据存到本地
-    await Database.localStore.guguStore.setItem(upMid, guguInfo);
     insertGuguDataToDom(guguInfo);
     addVideosListListener();
 }
 
+// 获取当前 up 主的 mid
 const getUpMid = (): string => {
     const url = window.location.href;
     const reg = /\/(\d+)\//;
@@ -236,6 +238,7 @@ const insertGuguDataToDom = (upGuguData: UpGuguData) => {
     }
 }
 
+// 移除掉 咕咕信息 相关的 dom
 export const removeGuguTag = () => {
     const doms = document.querySelectorAll('.insert__gugu-data');
     for(const dom of doms) {
@@ -244,6 +247,7 @@ export const removeGuguTag = () => {
     document.getElementById('space-gugu-guguLength').remove()
 }
 
+// 将某一个视频的托更时长插入到视频 dom
 const showVideoGuguTag = (videoDom: Element, guguLength: number) => {
     const newElement = document.createElement('div');
     newElement.innerHTML = `
@@ -272,6 +276,7 @@ const showVideoGuguTag = (videoDom: Element, guguLength: number) => {
     dom.append(newElement);
 }
 
+// 把up主的托更时长插入到 页面上
 const showUpGuguTag = (upGuguData: UpGuguData) => {
     const { 
         currentGuguLength, 
