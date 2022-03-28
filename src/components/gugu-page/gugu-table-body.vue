@@ -151,10 +151,10 @@ const toUpPage = (mid: number) => {
 		background-color: rgba(0, 0, 0, 0);
 	}
 	45% {
-		background-color: rgba(251, 255, 0, 0.616);
+		background-color: rgba(72, 255, 0, 0.616);
 	}
 	55% {
-		background-color: rgba(251, 255, 0, 0.616);
+		background-color: rgba(72, 255, 0, 0.616);
 	}
 	100% {
 		background-color: rgba(0, 0, 0, 0);

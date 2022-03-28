@@ -96,26 +96,36 @@ const initGugu = () => {
         // 查看本地的 followsIdList 是否为空
         let followsInfoList: UpInfo[] = await Database.localStore.followsInfoList.getItem(myMid);
 
-        if (followsInfoList) {
-            isLocalHasFollowsInfo.value = true;
-            // 先把所有人的数据插入到页面上
-            await updateAllFollowsGugu(followsInfoList);
-            refreshShowGuguList();
-        } 
-        const newFollowsInfoList = await getAllFollowsInfoList();
+        if (!followsInfoList) {
+            await refreshFollowsGuguList();
+            return;
+        }
+        await donefollowsGuguInfo(followsInfoList);
+    }
+
+    // 刷新关注列表
+    const refreshFollowsGuguList = async () => {
+        // 停止获取
+        isBatchRequesting.value = '';
+        fetchMode.value = 'single';
+        isLocalHasFollowsInfo.value = false;
+        const followsInfoList = await getAllFollowsInfoList();
+        await donefollowsGuguInfo(followsInfoList)
+    }
+
+    // 完成关注列表的处理
+    const donefollowsGuguInfo = async (followsInfoList: UpInfo[]) => {
         isLocalHasFollowsInfo.value = true;
-        await updateAllFollowsGugu(newFollowsInfoList);
+        await updateAllFollowsGugu(followsInfoList);
         refreshShowGuguList();
-    
         // 更新本地数据
-        await Database.localStore.followsInfoList.setItem(myMid, newFollowsInfoList);
+        await Database.localStore.followsInfoList.setItem(myMid, followsInfoList);
     }
 
     // 把所有本地的 up 主的咕咕信息显示到页面上
     const updateAllFollowsGugu = (followsInfoList: UpInfo[]) => {
         return Promise.all(followsInfoList.map((upInfo, index) => {
             return Database.localStore.videosListStore.getItem(String(upInfo.mid)).then(videosList => {
-                // 如果有的话
                 const gugu = {
                     ...upInfo,
                     currentGuguLength:undefined,
@@ -125,6 +135,7 @@ const initGugu = () => {
                     currentHaveVideosNum: -1,
                     guguLengthList: [],
                 }
+                // 如果有的话
                 if (videosList) {
                     const {
                         currentGuguLength,
@@ -221,7 +232,6 @@ const initGugu = () => {
                 return !videosIdList.includes(video.bvid);
             });
 
-            // 如果有新关注
             if(newVideosList.length > 0) {
                 videosList.unshift(...newVideosList);
                 isChange = true;
@@ -519,6 +529,7 @@ const initGugu = () => {
         isBatchRequesting,
         batchFetchRemainGugu,
         batchRefreshGugu,
+        refreshFollowsGuguList,
         handlingMid,
     }
 }
