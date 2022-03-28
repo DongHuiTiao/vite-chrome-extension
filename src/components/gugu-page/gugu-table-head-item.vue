@@ -99,9 +99,8 @@ const mouseChange = (type: MouseChangType, position: MouseChangePosition) => {
 			align-items: center;
 			background-color: #409eff;
 			padding: 3px;
-			margin-left: 3px;
-			border-radius: 3px;
-			border: 1px solid black;
+			margin-left: 6px;
+			box-shadow: 0 0 3px 0px #4b3f3f;
 		}
 	}
 	&--hover {
