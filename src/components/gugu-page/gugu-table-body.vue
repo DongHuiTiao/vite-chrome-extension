@@ -3,12 +3,8 @@
 		<li
 			v-for="(up, index) in showGuguList"
 			:key="index"
-			v-loading="handlingMid === up.mid"
 			class="flex align-center up-item"
-			element-loading-text="正在更新咕咕数据中..."
-			:element-loading-spinner="svg"
-			element-loading-svg-view-box="-10, -10, 50, 50"
-			style="width: 100%"
+			:class="{ loading: handlingMid === up.mid }"
 			@click="toUpPage(up.mid)"
 		>
 			<!-- 序号 -->
@@ -27,7 +23,7 @@
 				class="videos-num"
 				:style="{ width: guguHeadsMap['videosNum'].width + '%' }"
 			>
-				{{ up.guguLengthList.length }}
+				{{ up.videosNum }}
 			</div>
 			<template v-if="up.videosNum === -1">
 				<!-- 引导用户点击获取按钮 -->
@@ -102,17 +98,6 @@ const noVideosWidth = computed(() => {
 	return width + '%';
 });
 
-const svg = `
-        <path class="path" d="
-          M 30 15
-          L 28 17
-          M 25.61 25.61
-          A 15 15, 0, 0, 1, 15 30
-          A 15 15, 0, 1, 1, 27.99 7.5
-          L 15 15
-        " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
-      `;
-
 const noVideosNumWidth = computed(() => {
 	const width =
 		guguHeadsMap.videosNum.width +
@@ -150,7 +135,7 @@ const toUpPage = (mid: number) => {
 .up-item {
 	transition: background-color 0.5s;
 	border-radius: 16px;
-	padding: 12px;
+	height: 100px;
 	cursor: pointer;
 
 	&-img {
@@ -160,6 +145,23 @@ const toUpPage = (mid: number) => {
 	&:hover {
 		background-color: #00a1d6b3;
 	}
+}
+@keyframes loading {
+	0% {
+		background-color: rgba(0, 0, 0, 0);
+	}
+	45% {
+		background-color: rgba(251, 255, 0, 0.616);
+	}
+	55% {
+		background-color: rgba(251, 255, 0, 0.616);
+	}
+	100% {
+		background-color: rgba(0, 0, 0, 0);
+	}
+}
+.loading {
+	animation: loading 1.8s infinite;
 }
 .no-videos {
 	.gugu-table-body-col-style();
