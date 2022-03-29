@@ -39,6 +39,7 @@ export const onPageOpen = () => {
     const localIsOpen = Boolean(localStorage.getItem('is_open'));
     // 获取本地 isOpen 状态
     isOpen.value = localIsOpen;
+    // addHomeAndSubmitClickListener();
     addVideosListListener();
     addSwitch();
 
@@ -46,6 +47,22 @@ export const onPageOpen = () => {
         onLoad();
     }
 }
+
+// 监听 主页按钮 和 投稿按钮 的点击事件
+// const addHomeAndSubmitClickListener = () => {
+//     const nav = document.querySelector('.n-tab-links');
+//     const homeButton = nav.children[0];
+//     const submitButton = nav.children[2];
+//     homeButton.addEventListener('click', () => {
+//         removeVideosListListener();
+//         addVideosListListener();
+//     })
+//     submitButton.addEventListener('click', () => {
+//         removeVideosListListener();
+//         addVideosListListener();
+//         addSwitch();
+//     })
+// }
 
 // 增加开关
 const addSwitch = () => {
@@ -147,14 +164,18 @@ const addVideosListListener = () => {
         return;
     }
 
-    const dom = document.querySelector('.clearfix.cube-list');
-    dom.addEventListener('DOMNodeInserted', onVideosListChange);
+    const dom = document.querySelector('.s-space');
+    if (dom) {
+        dom.addEventListener('DOMNodeInserted', onVideosListChange);
+    }
 }
 
 // 移除视频列表变化的监听器
 const removeVideosListListener = () => {
-    const dom = document.querySelector('.clearfix.cube-list');
-    dom.removeEventListener('DOMNodeInserted', onVideosListChange);
+    const dom = document.querySelector('.s-space');
+    if (dom) {
+        dom.removeEventListener('DOMNodeInserted', onVideosListChange);
+    }
 }
 
 // 当前页面 up 主的咕咕信息,用于查看进度条和显示数据
@@ -205,7 +226,7 @@ export const onLoad = async () => {
 // 获取当前 up 主的 mid
 const getUpMid = (): string => {
     const url = window.location.href;
-    const reg = /\/(\d+)\//;
+    const reg = /\/(\d+)(\/)?/;
     const upMid = url.match(reg)[1];
     return upMid;
 }
@@ -276,7 +297,7 @@ const showVideoGuguTag = (videoDom: Element, guguLength: number) => {
     dom.append(newElement);
 }
 
-// 把up主的托更时长插入到 页面上
+// 把 up 主的托更时长插入到 页面上
 const showUpGuguTag = (upGuguData: UpGuguData) => {
     const { 
         currentGuguLength, 
@@ -284,21 +305,29 @@ const showUpGuguTag = (upGuguData: UpGuguData) => {
         averageGuguLength 
     } = upGuguData;
     // 找到 dom
-    const dom = document.querySelector('.be-tab-inner.clearfix');
-    const newElement =document.createElement('li');
+    const dom = document.querySelector('.h-gradient');
+    const newElement =document.createElement('div');
     // newElement.classList.add('be-tab-item');
     newElement.id = 'space-gugu-guguLength';
 
     newElement.innerHTML = `
-        <li 
-            class="be-tab-item" 
-            style="position: relative;"
+        <div 
+            style=" 
+                height: 86px;
+                display: flex;
+                align-items: center;
+                position: relative;
+                top: -85px;
+                padding: 10px;
+                box-sizing: border-box;
+                background-color: #00000080;
+                color: white;
+            "
         >
             <div 
                 style="
                     position: absolute;
                     width: 249px;
-                    top: -18px;
                 "
             >
                 <div 
@@ -362,7 +391,7 @@ const showUpGuguTag = (upGuguData: UpGuguData) => {
                     天
                 </div>
             </div>
-        </li>
+        </div>
     `;
     // 插入 数据 到 dom
     dom.append(newElement);
