@@ -71,6 +71,12 @@
 				type="warning"
 				@click.stop="cancelRefresh"
 			></el-button>
+			<!-- 删除按钮 -->
+			<el-popconfirm title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUp">
+				<template #reference>
+					<el-button type="danger" :icon="Delete" circle size="small" />
+				</template>
+			</el-popconfirm>
 		</div>
 		<!-- 展开所有 up 主信息的面板 -->
 		<div class="space-gugu__all-btn">
@@ -80,22 +86,29 @@
 </template>
 
 <script setup lang="ts">
-import { isOpen, changIsOpen, upGugu, onLoad } from '../../../utils/up-space-gugu/index';
-import { Download, Refresh, CircleClose } from '@element-plus/icons-vue';
+import { isOpen, changIsOpen, upGugu, onLoad, removeGuguTag } from '../../../utils/up-space-gugu/index';
+import { Download, Refresh, CircleClose, Delete } from '@element-plus/icons-vue';
 import { getTimeDiff } from '../../../utils/common';
 import { useGugu } from '../../../utils/useGugu';
 import { ElMessage } from 'element-plus';
 
-const { handlingMid, refreshOneUpGugu, cancelRefresh, drawerVisible, init } = useGugu();
+const { handlingMid, refreshOneUpGugu, cancelRefresh, drawerVisible, init, deleteUpGugu } = useGugu();
 
 // 给当前插件一个 id
 const guguExtensionId = String(Date.now());
 
 const refresh = async () => {
 	// 更新数据
-	await refreshOneUpGugu(upGugu.value);
+	const isContinue = await refreshOneUpGugu(upGugu.value);
 	// 插入视频 dom
-	onLoad();
+	if (isContinue) {
+		onLoad();
+	}
+};
+
+const deleteUp = () => {
+	deleteUpGugu(upGugu.value);
+	removeGuguTag();
 };
 
 // 计算视频列表获取进度

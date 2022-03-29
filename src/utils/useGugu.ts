@@ -493,14 +493,17 @@ const initGugu = () => {
             return;
         }
         const upMid = String(up.mid);
-        await Database.localStore.videosListStore.removeItem(upMid)
-        // 全部结束之后，从视图中删除该 up 主
-        const removeIndex = followsGuguList.value.findIndex(currentUp => {
-            return currentUp.mid === up.mid;
-        });
+        await Database.localStore.videosListStore.removeItem(upMid);
 
-        followsGuguList.value.splice(removeIndex, 1);
-        refreshShowGuguList();
+        Object.assign(up, {
+            currentGuguLength:undefined,
+            averageGuguLength:undefined,
+            maxGuguLength:undefined,
+            videosNum: -1,
+            currentHaveVideosNum: -1,
+            guguLengthList: [],
+        })
+
         // 要显示通知
         ElMessage({
             message: '已从本地删除该 up 主的信息',
@@ -514,7 +517,7 @@ const initGugu = () => {
     const refreshOneUpGugu = async (up: UpGugu) => {
         if (handlingMid.value !== -1 && handlingMid.value !== up.mid) {
             ElMessage.error('正在获取其他 up 主数据, 请先取消再来获取');
-            return;
+            return false;
         }
         const mid = up.mid;
         isSingleRequesting.value = true;
@@ -522,7 +525,7 @@ const initGugu = () => {
         await handleOneGugu(mid, up);
         handlingMid.value = -1;
         isSingleRequesting.value = false;
-        return;
+        return true;
     }
 
     // 取消刷新
