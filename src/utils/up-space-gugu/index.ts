@@ -2,13 +2,12 @@
 import { UpGugu, VideoInfo } from '../type';
 import databaseFactory from '../../database/index';
 import { getTimeDiff } from '../common/index';
-import SpaceGuguSwitch from '../../components/gugu-page/up-space/space-gugu-switch.vue';
-import SpaceGuguProgress from '../../components/gugu-page/up-space/space-gugu-progress.vue';
+import SpaceGugu from '../../components/gugu-page/up-space/space-gugu.vue';
 import { createApp, ref } from 'vue';
 import { useGugu } from './../useGugu';
 
 const Database = databaseFactory();
-const { getUpAllVideosList, getGuguDetails, isSingleRequesting } = useGugu(); 
+const { getGuguDetails } = useGugu(); 
 export const isOpen = ref<boolean>(false);
 
 enum IsOpenState {
@@ -39,65 +38,20 @@ export const onPageOpen = () => {
     const localIsOpen = Boolean(localStorage.getItem('is_open'));
     // 获取本地 isOpen 状态
     isOpen.value = localIsOpen;
-    // addHomeAndSubmitClickListener();
-    addVideosListListener();
-    addSwitch();
+    addGuguDom();
 
     if (isOpen.value) {
         onLoad();
     }
 }
-
-// 监听 主页按钮 和 投稿按钮 的点击事件
-// const addHomeAndSubmitClickListener = () => {
-//     const nav = document.querySelector('.n-tab-links');
-//     const homeButton = nav.children[0];
-//     const submitButton = nav.children[2];
-//     homeButton.addEventListener('click', () => {
-//         removeVideosListListener();
-//         addVideosListListener();
-//     })
-//     submitButton.addEventListener('click', () => {
-//         removeVideosListListener();
-//         addVideosListListener();
-//         addSwitch();
-//     })
-// }
-
-// 增加开关
-const addSwitch = () => {
-    const dom = document.querySelector('.be-tab-inner.clearfix');
-    const newElement =document.createElement('li');
-    newElement.classList.add('be-tab-item');
-    newElement.id = 'space-gugu-switch'
-    
+const addGuguDom = () => {
+    const dom = document.querySelector('.h-gradient');
+    const newElement =document.createElement('div');
+    newElement.id = 'space-gugu';
     dom.append(newElement);
-    const spaceGuguSwitch = createApp(SpaceGuguSwitch as any);
 
-    spaceGuguSwitch.mount('#space-gugu-switch')
-}
-
-// 增加进度条
-const addProgress = () => {
-    const dom = document.querySelector('.be-tab-inner.clearfix');
-    const newElement =document.createElement('li');
-    newElement.classList.add('be-tab-item');
-    newElement.id = 'space-gugu-progress';
-    newElement.style.display = 'flex';
-    Object.assign(newElement.style, {
-        display: 'flex',
-        width: '233px',
-        height: '28px',
-        alignCenter: 'center',
-    })
-    dom.append(newElement);
-    const spaceGuguProgress = createApp(SpaceGuguProgress as any);
-    spaceGuguProgress.mount('#space-gugu-progress');
-}
-
-// 移除进度条
-const removeProgress = () => {
-    document.getElementById('space-gugu-progress').remove();
+    const spaceGuguDom = createApp(SpaceGugu as any);
+    spaceGuguDom.mount('#space-gugu');
 }
 
 // 检查是否是因为 hover 事件导致的 视频列表更新
@@ -151,10 +105,7 @@ const onVideosListChange = async (e: any) => {
     }
 
     if (!isContinue) return;
-    // 判断页面上是否有显示 gugu 内容
-    if (document.getElementById('space-gugu-guguLength')) {
-        removeGuguTag();
-    }
+
     onLoad();
 }
 
@@ -193,34 +144,25 @@ export const upGugu = ref<UpGugu>({
 
 // 刷新咕咕数据
 export const onLoad = async () => {
-    // removeGuguTag();
+    removeGuguTag();
     // 查看本地是否有 up 主 的 gugu 数据
     removeVideosListListener();
     const upMid = getUpMid();
+    upGugu.value.mid = Number(upMid);
     const localVideosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(upMid);
     if (localVideosList) {
         // 把每个视频的 拖更时间 插入到 dom 中
         // 把三个 gugu 数据展示到页面上
-        const upGuguData = getGuguDetails(localVideosList)
+        const upGuguData = getGuguDetails(localVideosList);
+        Object.assign(upGugu.value, {
+            videosNum: upGuguData.guguLengthList.length,
+            currentHaveVideosNum: upGuguData.guguLengthList.length,
+            ...upGuguData
+        });
         insertGuguDataToDom(upGuguData);
         addVideosListListener();
         return;
     }
-    // 开始请求数据, 显示进度条
-    addProgress();
-
-    // 获得用户的视频
-    isSingleRequesting.value = true;
-    const videosList = await getUpAllVideosList(Number(upMid), upGugu.value);
-    isSingleRequesting.value = false;
-    
-    removeProgress();
-
-    await Database.localStore.videosListStore.setItem(upMid, videosList);
-    // 获得咕咕数据
-    const guguInfo = getGuguDetails(videosList);
-    insertGuguDataToDom(guguInfo);
-    addVideosListListener();
 }
 
 // 获取当前 up 主的 mid
@@ -236,9 +178,6 @@ type UpGuguData = ReturnType<GetGuguDetails>
 
 // 把计算好的 up 主的托更数据显示到页面上
 const insertGuguDataToDom = (upGuguData: UpGuguData) => {
-    // 插入三个数据到 dom 中
-    showUpGuguTag(upGuguData);
-
     // 获取当页的 dom 列表
     const videosDomList = [...document.getElementsByClassName('small-item fakeDanmu-item')];
     const guguLengthMap = upGuguData.guguLengthList.reduce((pre, guguInfo) => {
@@ -265,7 +204,6 @@ export const removeGuguTag = () => {
     for(const dom of doms) {
         dom.remove();
     }
-    document.getElementById('space-gugu-guguLength').remove()
 }
 
 // 将某一个视频的托更时长插入到视频 dom
@@ -294,105 +232,5 @@ const showVideoGuguTag = (videoDom: Element, guguLength: number) => {
     `;
     const dom = videoDom.children[0];
 
-    dom.append(newElement);
-}
-
-// 把 up 主的托更时长插入到 页面上
-const showUpGuguTag = (upGuguData: UpGuguData) => {
-    const { 
-        currentGuguLength, 
-        maxGuguLength, 
-        averageGuguLength 
-    } = upGuguData;
-    // 找到 dom
-    const dom = document.querySelector('.h-gradient');
-    const newElement =document.createElement('div');
-    // newElement.classList.add('be-tab-item');
-    newElement.id = 'space-gugu-guguLength';
-
-    newElement.innerHTML = `
-        <div 
-            style=" 
-                height: 86px;
-                display: flex;
-                align-items: center;
-                position: relative;
-                top: -85px;
-                padding: 10px;
-                box-sizing: border-box;
-                background-color: #00000080;
-                color: white;
-            "
-        >
-            <div 
-                style="
-                    position: absolute;
-                    width: 249px;
-                "
-            >
-                <div 
-                    style="
-                        height: 21px;
-                        display: flex;
-                        align-items: center;
-                        user-select: none;
-                    "
-                >   
-                    当前咕咕时长 
-                    <span 
-                        style="
-                            color: #0085ff;
-                            margin: 0 10px;
-                            font-weight: 600;
-                        "
-                    >
-                        ${getTimeDiff(currentGuguLength)}
-                    </span>
-                    天
-                </div>
-                <div 
-                    style="
-                        height: 21px;
-                        display: flex;
-                        align-items: center;
-                        user-select: none;
-                    "
-                >
-                    平均更新频率 
-                    <span 
-                        style="
-                            color: #0c9508;
-                            margin: 0 10px;
-                            font-weight: 600;
-                        "
-                    >
-                        ${getTimeDiff(averageGuguLength)} 
-                    </span>
-                    天
-                </div>
-                <div 
-                    style="
-                        height: 21px;
-                        display: flex;
-                        align-items: center;
-                        user-select: none;
-                    "
-                >
-                    最多咕咕时长 
-                    <span 
-                        style="
-                            color: #ea0000;
-                            margin: 0 10px;
-                            font-weight: 600;
-                        "
-                    >
-                        ${getTimeDiff(maxGuguLength)}
-                    </span>
-                    天
-                </div>
-            </div>
-        </div>
-    `;
-    // 插入 数据 到 dom
     dom.append(newElement);
 }

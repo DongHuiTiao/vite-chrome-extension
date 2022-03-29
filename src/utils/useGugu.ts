@@ -518,7 +518,9 @@ const initGugu = () => {
         isSingleRequesting.value = true;
         fetchMode.value = 'single';
         await handleOneGugu(mid, up);
+        handlingMid.value = -1;
         isSingleRequesting.value = false;
+        return;
     }
 
     // 取消刷新
@@ -590,8 +592,10 @@ const initGugu = () => {
         showGuguListLength.value += 100;
 	    refreshShowGuguList();
     }
-
+    // 是否展示抽屉
+    const drawerVisible = ref<boolean>(false);
     return {
+        drawerVisible,
         followsGuguList,
         showGuguList,
         loadMoreGuguList,
