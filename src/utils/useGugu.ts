@@ -327,19 +327,21 @@ const initGugu = () => {
 
     // 批量获取剩余 up 主的咕咕信息
     const batchFetchRemainGugu = async () => {
-        // 调整状态
-        isBatchRequesting.value = 'batchFetchRemainGugu';
-        fetchMode.value = 'batch';
-        // 获得剩余的 up 主
-        currentDoneRemainNum.value = 0;
         const remainGuguList = followsGuguList.value.filter(up => {
             return up.videosNum === -1;
         });
 
         // 如果没有剩余的 up 主了,则返回
         if (remainGuguList.length === 0) {
+            ElMessage.warning('已经全部获取完了');
             return;
         }
+
+        // 调整状态
+        isBatchRequesting.value = 'batchFetchRemainGugu';
+        fetchMode.value = 'batch';
+        // 获得剩余的 up 主
+        currentDoneRemainNum.value = 0;
 
         remainGuguListLength.value = remainGuguList.length;
 
