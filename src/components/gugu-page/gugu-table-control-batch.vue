@@ -3,19 +3,23 @@
 		<!-- 按钮区域 -->
 		<div v-if="isBatchRequesting === ''">
 			<div class="gugu-table__drawer__batch-operate">
-				<el-button @click="batchFetchRemainGugu">一键获取剩余 up 主</el-button>
+				<el-button size="small" @click="batchFetchRemainGugu">一键获取剩余 up 主</el-button>
 			</div>
 			<div class="gugu-table__drawer__batch-operate">
-				<el-button @click="batchRefreshGugu">一键刷新已获取 up 主</el-button>
+				<el-button size="small" @click="batchRefreshGugu">一键刷新已获取 up 主</el-button>
 			</div>
 			<div class="gugu-table__drawer__batch-operate">
-				<el-button @click="refreshFollowsGuguList">刷新关注的 up 主列表</el-button>
+				<el-button size="small" @click="refreshFollowsGuguList">刷新关注的 up 主列表</el-button>
 			</div>
 		</div>
 		<!-- 进度区域 -->
 		<div v-else>
 			<div class="gugu-table__drawer__batch-operate">
-				<el-button type="danger" @click="isBatchRequesting = ''">终止获取</el-button>
+				<el-button type="danger" size="small" @click="stopBatch">终止获取</el-button>
+			</div>
+			<div class="gugu-table__drawer__batch-operate">
+				<span style="margin-right: 8px">是否跟踪</span>
+				<el-switch v-model="isScrollToHandlingDom" @change="onChange"></el-switch>
 			</div>
 
 			<div v-if="remainGuguListLength !== -1" class="gugu-table__drawer__batch-operate">
@@ -54,7 +58,23 @@ const {
 	remainGuguListLength,
 	currentDoneRemainNum,
 	batchFetchRemainGuguProgress,
+	isScrollToHandlingDom,
+	scrollToHandlingDom,
+	handlingMid,
 } = useGugu();
+
+const onChange = (isOpen: boolean) => {
+	// 如果开启了，就跳转到正在处理的 dom 上
+	if (isOpen) {
+		scrollToHandlingDom(handlingMid.value);
+	}
+};
+
+// 停止批量操作
+const stopBatch = () => {
+	isBatchRequesting.value = '';
+	isScrollToHandlingDom.value = false;
+};
 
 const batchType = computed(() => {
 	if (isBatchRequesting.value === '') return '';
@@ -65,5 +85,6 @@ const batchType = computed(() => {
 <style lang="less">
 .gugu-table__drawer__batch-operate {
 	margin-top: 15px;
+	user-select: none;
 }
 </style>

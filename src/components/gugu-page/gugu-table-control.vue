@@ -6,9 +6,28 @@
 		</div>
 		<div class="control">
 			<el-divider content-position="center">排序</el-divider>
-			<el-select v-model="sortType" class="m-2" placeholder="选择排序方式">
-				<el-option v-for="item in sortTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-			</el-select>
+			<el-tooltip
+				class="box-item"
+				effect="dark"
+				:disabled="isBatchRequesting === ''"
+				content="需要先取消批量操作"
+				placement="top"
+			>
+				<el-select
+					v-model="sortType"
+					class="m-2"
+					placeholder="选择排序方式"
+					:disabled="isBatchRequesting !== ''"
+					size="small"
+				>
+					<el-option
+						v-for="item in sortTypeOptions"
+						:key="item.value"
+						:label="item.label"
+						:value="item.value"
+					/>
+				</el-select>
+			</el-tooltip>
 
 			<el-divider content-position="center">是否降序排序</el-divider>
 			<el-radio v-model="sortOrder" :disabled="!sortType" :label="false" size="large">降序</el-radio>
@@ -35,8 +54,16 @@
 <script setup>
 import { useGugu } from '../../utils/useGugu';
 import GuguTableControlBatch from './gugu-table-control-batch.vue';
-const { sortType, isAddSelf, sortOrder, userNameFilter, isShowControlDrawer, isHideUnFetchUp, isHideNoVideosUp } =
-	useGugu();
+const {
+	sortType,
+	isAddSelf,
+	sortOrder,
+	userNameFilter,
+	isShowControlDrawer,
+	isHideUnFetchUp,
+	isHideNoVideosUp,
+	isBatchRequesting,
+} = useGugu();
 const sortTypeOptions = [
 	{
 		label: '不排序',

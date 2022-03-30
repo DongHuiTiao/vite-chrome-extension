@@ -2,6 +2,7 @@
 	<ul v-infinite-scroll="loadMoreGuguList" :infinite-scroll-distance="100" :infinite-scroll-immediate="false">
 		<li
 			v-for="(up, index) in showGuguList"
+			:id="`dht_${up.mid}`"
 			:key="index"
 			class="flex align-center up-item"
 			:class="{ loading: handlingMid === up.mid }"

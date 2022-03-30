@@ -1,4 +1,4 @@
-import { computed, Ref, ref, watch } from 'vue';
+import { computed, nextTick, Ref, ref, watch } from 'vue';
 import { 
     getOneGroupFollows,
     getUpVideosNum,
@@ -325,6 +325,7 @@ const initGugu = () => {
         return progress;
     })
 
+    const isScrollToHandlingDom = ref<boolean>(false);
     // 批量获取剩余 up 主的咕咕信息
     const batchFetchRemainGugu = async () => {
         const remainGuguList = followsGuguList.value.filter(up => {
@@ -347,6 +348,9 @@ const initGugu = () => {
 
         // 逐个的获取 up 主信息
         for(let upGugu of remainGuguList) {
+            if (isScrollToHandlingDom.value) {
+                scrollToHandlingDom(upGugu.mid);
+            }
             const isContinue = await handleOneGugu(upGugu.mid, upGugu);
             if (!isContinue) {
                 // 恢复默认状态
@@ -369,7 +373,7 @@ const initGugu = () => {
         fetchMode.value = 'batch';
         // 获得已获取信息的 up 主
         currentDoneRemainNum.value = 0;
-        const doneGuguList = followsGuguList.value.filter(up => {
+        const doneGuguList = filterGuguList.value.filter(up => {
             return up.videosNum !== -1;
         });
 
@@ -381,6 +385,9 @@ const initGugu = () => {
         remainGuguListLength.value = doneGuguList.length;
 
         for(let upGugu of doneGuguList) {
+            if (isScrollToHandlingDom.value) {
+                scrollToHandlingDom(upGugu.mid);
+            }
             const isContinue = await handleOneGugu(upGugu.mid, upGugu);
             if (!isContinue) {
                 // 恢复默认状态
@@ -394,6 +401,32 @@ const initGugu = () => {
         remainGuguListLength.value = -1;
         isSingleRequesting.value = false;
         currentDoneRemainNum.value = 0;
+    }
+    // 视图跳转掉正在处理的 dom 上
+    const scrollToHandlingDom = (mid: number) => {
+        // 先获取视图区域的 dom
+        const showResultDom = document.querySelector('.gugu-table__show-result');
+        // 获取正在处理的 up 主的 dom
+        const handlingDom = document.getElementById(`dht_${mid}`);
+        // 如果没有找到的话，说明页面不够长，就扩展一下页面
+        if (!handlingDom) {
+            const handlingGuguIndex = filterGuguList.value.findIndex(up => up.mid === mid);
+            showGuguListLength.value = handlingGuguIndex + 20;
+            refreshShowGuguList();
+            nextTick(()=> {
+                scrollToHandlingDom(mid);
+            })
+            return;
+        }
+        // 获取正在处理的 up 主的dom 的高度
+        const { offsetTop } = handlingDom;
+
+        // 视图跳转过去
+        showResultDom.scrollTo({
+            top: offsetTop - 345,
+            left: 0,
+            behavior: 'smooth'
+        });
     }
 
     // 获取 up 咕咕三个数据
@@ -629,6 +662,8 @@ const initGugu = () => {
         batchFetchRemainGuguProgress,
         isSingleRequesting,
         cancelRefresh,
+        scrollToHandlingDom,
+        isScrollToHandlingDom,
     }
 }
 
