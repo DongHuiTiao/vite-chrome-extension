@@ -134,6 +134,7 @@ export const upGugu = ref<UpGugu>({
     mid: 0, 
     uname: '',
     face: '',
+    mtime: 0,
     currentGuguLength:undefined,
     averageGuguLength:undefined,
     maxGuguLength:undefined,

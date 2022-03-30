@@ -22,6 +22,7 @@ export interface UpGugu {
     mid: number; // 用户 mid
     uname: string; // 昵称
     face: string; // 头像
+    mtime: number; // 关注时间
     currentGuguLength?: number; // 当前 咕咕 多久
     averageGuguLength?: number; // 平均 更新 频率
     maxGuguLength?: number; // 最大 咕咕 时间

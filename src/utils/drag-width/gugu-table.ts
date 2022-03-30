@@ -17,6 +17,7 @@ export enum GuguHeadsName {
     index = '序号',
     avatar = '头像',
     nickName = '昵称',
+    followDate = '关注日期',
     videosNum = '视频数量',
     currentGuguLength = '当前咕咕时长',
     averageGuguLength = '平均更新频率',
@@ -25,10 +26,11 @@ export enum GuguHeadsName {
 }
 
 const guguHeadsWidth = {
-    index: 10,
-    avatar: 10,
+    index: 6,
+    avatar: 6,
     nickName: 15,
-    videosNum: 10,
+    followDate: 12,
+    videosNum: 6,
     currentGuguLength: 15,
     averageGuguLength: 15,
     maxGuguLength: 15,

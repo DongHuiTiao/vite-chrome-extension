@@ -27,6 +27,7 @@ const initGugu = () => {
         mid: 0, 
         uname: '',
         face: '',
+        mtime: 0,
         currentGuguLength:undefined,
         averageGuguLength:undefined,
         maxGuguLength:undefined,
@@ -161,17 +162,28 @@ const initGugu = () => {
 
     const isBatchRequesting = ref<string>('');
     const isSingleRequesting = ref<boolean>(false);
+    const isNext = ref<boolean>(false);
     const fetchMode = ref<string>('single');
     // 获取 up 主全部视频信息的方法
-    const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<VideoInfo[] | undefined>  => {
+
+    interface Result {
+        type: string,
+        videosList: VideoInfo[]
+    }
+    const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<Result>  => {
         // 获取 up 主制作的视频的数量
-        let viedosInfoList = [];
+        let videosList = [];
         const num = await RequestQueue.reaquest<number>(
            () => getUpVideosNum(mid),
         )
         guguRef.videosNum = num;
         // 如果没有视频的话，直接返回空数组
-        if (!num) return viedosInfoList;
+        if (!num) {
+            return {
+                type: 'continue',
+                videosList
+            }
+        };
         guguRef.currentHaveVideosNum = 0;
 
         // 获取的最多页数
@@ -187,8 +199,23 @@ const initGugu = () => {
             ) {
                 guguRef.videosNum = -1;
                 guguRef.currentHaveVideosNum = -1;
-                return;
+                return {
+                    type: 'stop',
+                    videosList: [],
+                };
             }
+
+            // 如果监听到点击了下一个,则跳出当前循环
+            if (isNext.value) {
+                guguRef.videosNum = -1;
+                guguRef.currentHaveVideosNum = -1;
+                isNext.value = false;
+                return {
+                    type: 'next',
+                    videosList: [],
+                };
+            }
+
             // 获取一批 up 主的视频信息，每组上限 50 个
             const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
                 () => getOneGroupUpVideoInfo(Number(mid), currentPage)
@@ -199,10 +226,13 @@ const initGugu = () => {
 
             guguRef.currentHaveVideosNum += newList.length;
 
-            viedosInfoList.push(...newList);
+            videosList.push(...newList);
             currentPage++;
         }
-        return viedosInfoList;
+        return {
+            type: 'continue',
+            videosList
+        }
     };
 
     // 获得视频列表差异
@@ -263,13 +293,19 @@ const initGugu = () => {
         // 如果本地没有 视频列表
         if (!videosList) {
             // 请求全部 videosList
-            videosList = await getUpAllVideosList(mid, guguRef);
-            // 如果被中断了请求，则停止处理
-            if (!videosList) {
+            const result = await getUpAllVideosList(mid, guguRef);
+
+            if (result.type === 'stop') {
                 handlingMid.value = -1;
                 return false;
             }
-            isVideosListChange = true;
+
+            if (result.type === 'next') {
+                return true;
+            }
+
+            videosList = result.videosList;
+                isVideosListChange = true;
         }
         else {
             // 计算 followsIdList 差量
@@ -348,6 +384,7 @@ const initGugu = () => {
 
         // 逐个的获取 up 主信息
         for(let upGugu of remainGuguList) {
+            // 判断是否需要跟踪 dom
             if (isScrollToHandlingDom.value) {
                 scrollToHandlingDom(upGugu.mid);
             }
@@ -637,11 +674,9 @@ const initGugu = () => {
         followsGuguList,
         showGuguList,
         loadMoreGuguList,
-        getUpAllVideosList,
         getGuguDetails,
         deleteUpGugu,
         refreshOneUpGugu,
-        myGugu,
         init,
         sortType,
         isAddSelf,
@@ -660,6 +695,7 @@ const initGugu = () => {
         remainGuguListLength,
         currentDoneRemainNum,
         batchFetchRemainGuguProgress,
+        isNext,
         isSingleRequesting,
         cancelRefresh,
         scrollToHandlingDom,

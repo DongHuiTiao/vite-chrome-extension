@@ -78,6 +78,7 @@
 				</template>
 			</el-popconfirm>
 		</div>
+		<!-- TODO 未登录要拦截 -->
 		<!-- 展开所有 up 主信息的面板 -->
 		<div class="space-gugu__all-btn">
 			<el-button size="small" @click="open">查看关注 up 主咕咕信息</el-button>

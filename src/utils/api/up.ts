@@ -6,6 +6,7 @@ export interface UpInfo {
 	mid: number;
 	uname: string;
 	face: string;
+	mtime: number;
 }
 export const getOneGroupFollows = async (mid: number, currentPage: number): Promise<UpInfo[]> => {
     const res = await axios.get(`https://api.bilibili.com/x/relation/followings?vmid=${mid}&pn=${currentPage}&ps=50&order=desc`)

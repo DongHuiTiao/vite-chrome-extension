@@ -18,6 +18,10 @@
 			</div>
 			<!-- 昵称 -->
 			<div class="nick-name" :style="{ width: guguHeadsMap['nickName'].width + '%' }">{{ up.uname }}</div>
+			<!-- 关注日期 -->
+			<div class="follow-date" :style="{ width: guguHeadsMap['followDate'].width + '%' }">
+				{{ formatDateToChinese(up.mtime) }}
+			</div>
 			<!-- 视频数量 -->
 			<div
 				v-if="up.videosNum !== -1"
@@ -83,8 +87,18 @@
 					type="warning"
 					@click.stop="cancelRefresh"
 				></el-button>
+				<!-- 跳过按钮 -->
+				<el-tooltip
+					v-if="isBatchRequesting !== '' && handlingMid === up.mid"
+					class="box-item"
+					effect="dark"
+					content="跳过这个 up 主, 计算下一个 up 主"
+					placement="top"
+				>
+					<el-button type="primary" :icon="Bottom" circle size="small" @click.stop="isNext = true" />
+				</el-tooltip>
 				<!-- 删除按钮 -->
-				<el-popconfirm title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
+				<el-popconfirm v-else title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
 					<template #reference>
 						<el-button type="danger" :icon="Delete" circle size="small" />
 					</template>
@@ -97,13 +111,20 @@
 <script setup lang="ts">
 import { useGugu } from '../../utils/useGugu';
 import { getTimeDiff } from '../../utils/common/index';
-import { Delete, Refresh, Download, CircleClose } from '@element-plus/icons-vue';
+import { Delete, Refresh, Download, CircleClose, Bottom } from '@element-plus/icons-vue';
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 import { computed } from 'vue';
 
-// TODO 自动跟踪批量中正在处理的 up 主
-
-const { deleteUpGugu, refreshOneUpGugu, showGuguList, loadMoreGuguList, handlingMid, cancelRefresh } = useGugu();
+const {
+	deleteUpGugu,
+	refreshOneUpGugu,
+	showGuguList,
+	loadMoreGuguList,
+	handlingMid,
+	cancelRefresh,
+	isBatchRequesting,
+	isNext,
+} = useGugu();
 
 const noVideosWidth = computed(() => {
 	const width =
@@ -131,6 +152,13 @@ const getProgress = (currentNum: number, videosNum: number) => {
 	}
 
 	return Number(((currentNum / videosNum) * 100).toFixed(2));
+};
+
+const formatDateToChinese = (timestamp: number) => {
+	const time = new Date(timestamp * 1000);
+	return `${time.getFullYear()}年${
+		time.getMonth() + 1
+	}月${time.getDate()}日${time.getHours()}点${time.getMinutes()}分`;
 };
 
 // 跳转到 up 主的页面
@@ -187,6 +215,9 @@ const toUpPage = (mid: number) => {
 	.gugu-table-body-col-style();
 }
 .nick-name {
+	.gugu-table-body-col-style();
+}
+.follow-date {
 	.gugu-table-body-col-style();
 }
 .videos-num {
