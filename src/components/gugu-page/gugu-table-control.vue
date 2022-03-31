@@ -30,8 +30,8 @@
 			</el-tooltip>
 
 			<el-divider content-position="center">是否降序排序</el-divider>
-			<el-radio v-model="sortOrder" :disabled="!sortType" :label="false" size="large">降序</el-radio>
-			<el-radio v-model="sortOrder" :disabled="!sortType" :label="true" size="large">升序</el-radio>
+			<el-radio v-model="sortOrder" :label="false" size="large">降序</el-radio>
+			<el-radio v-model="sortOrder" :label="true" size="large">升序</el-radio>
 
 			<el-divider content-position="center">隐藏</el-divider>
 			<div>
@@ -66,8 +66,8 @@ const {
 } = useGugu();
 const sortTypeOptions = [
 	{
-		label: '不排序',
-		value: '',
+		label: '根据关注时间',
+		value: 'mtime',
 	},
 	{
 		label: '根据视频数量',

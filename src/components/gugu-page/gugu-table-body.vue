@@ -1,5 +1,10 @@
 <template>
-	<ul v-infinite-scroll="loadMoreGuguList" :infinite-scroll-distance="100" :infinite-scroll-immediate="false">
+	<ul
+		v-infinite-scroll="loadMoreGuguList"
+		:infinite-scroll-distance="100"
+		:infinite-scroll-immediate="false"
+		@mousewheel="onMouseWheel"
+	>
 		<li
 			v-for="(up, index) in showGuguList"
 			:id="`dht_${up.mid}`"
@@ -19,7 +24,7 @@
 			<!-- 昵称 -->
 			<div class="nick-name" :style="{ width: guguHeadsMap['nickName'].width + '%' }">{{ up.uname }}</div>
 			<!-- 关注日期 -->
-			<div class="follow-date" :style="{ width: guguHeadsMap['followDate'].width + '%' }">
+			<div class="mtime" :style="{ width: guguHeadsMap['mtime'].width + '%' }">
 				{{ formatDateToChinese(up.mtime) }}
 			</div>
 			<!-- 视频数量 -->
@@ -114,6 +119,7 @@ import { getTimeDiff } from '../../utils/common/index';
 import { Delete, Refresh, Download, CircleClose, Bottom } from '@element-plus/icons-vue';
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 import { computed } from 'vue';
+import { ElMessage } from 'element-plus';
 
 const {
 	deleteUpGugu,
@@ -124,7 +130,15 @@ const {
 	cancelRefresh,
 	isBatchRequesting,
 	isNext,
+	isScrollToHandlingDom,
 } = useGugu();
+
+const onMouseWheel = () => {
+	if (isScrollToHandlingDom.value) {
+		isScrollToHandlingDom.value = false;
+		ElMessage.info('你滑动了，那我不跟踪啦');
+	}
+};
 
 const noVideosWidth = computed(() => {
 	const width =
@@ -217,7 +231,7 @@ const toUpPage = (mid: number) => {
 .nick-name {
 	.gugu-table-body-col-style();
 }
-.follow-date {
+.mtime {
 	.gugu-table-body-col-style();
 }
 .videos-num {

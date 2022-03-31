@@ -605,7 +605,7 @@ const initGugu = () => {
         isBatchRequesting.value = '';
     };
     // 排序相关
-    const sortType = ref<'' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videosNum'>('');
+    const sortType = ref<'mtime' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videosNum'>('mtime');
     // 是否加入自己
     const isAddSelf = ref<boolean>(false);
     // 排列顺序
@@ -638,7 +638,7 @@ const initGugu = () => {
         // 如果加入自己的数据
         if (isAddSelf.value) tempList.unshift(myGugu.value);
         // 如果不排序
-        if (!sortType.value) return tempList;
+        // if (!sortType.value) return tempList;
         // 如果排序
         const key = sortType.value;
         // 升序
