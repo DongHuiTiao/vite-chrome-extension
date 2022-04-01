@@ -21,7 +21,7 @@ const initGugu = () => {
 
     // 所有我关注的 up 的咕咕列表信息
     const followsGuguList: Ref<UpGugu[]> = ref<UpGugu[]>([]);
-
+    const isLoading = ref<boolean>(true);
     // 我自己的咕咕信息
     const myGugu: Ref<UpGugu> = ref<UpGugu>({
         mid: 0, 
@@ -44,8 +44,12 @@ const initGugu = () => {
         if (isInit) return;
         isInit = true;
         // 获取关注的 up 主的 咕咕信息
-        getFollowsGuguList();
-        getMyGugu();
+        await Promise.all([
+            getFollowsGuguList(),
+            getMyGugu()
+        ])
+        isLoading.value = false;
+        isShowControlDrawer.value = true;
     }
 
     // 获取我的 gugu 数据
@@ -583,7 +587,7 @@ const initGugu = () => {
     }
 
     // 抽屉相关的功能
-    const isShowControlDrawer = ref<boolean>(true);
+    const isShowControlDrawer = ref<boolean>(false);
 
     const refreshOneUpGugu = async (up: UpGugu) => {
         if (handlingMid.value !== -1 && handlingMid.value !== up.mid) {
@@ -679,6 +683,7 @@ const initGugu = () => {
         deleteUpGugu,
         refreshOneUpGugu,
         init,
+        isLoading,
         sortType,
         isAddSelf,
         sortOrder,

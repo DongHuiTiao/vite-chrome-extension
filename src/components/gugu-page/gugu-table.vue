@@ -21,7 +21,15 @@
 				<!-- 表头 -->
 				<GuguTableHead />
 				<!-- 表身 -->
-				<GuguTableBody />
+				<div
+					v-if="isLoading"
+					v-loading="isLoading"
+					:element-loading-svg="svg"
+					element-loading-svg-view-box="-10, -10, 50, 50"
+					element-loading-text="正在加载中, 请稍候..."
+					class="gugu-table__loading-follows custom-loading-svg"
+				></div>
+				<GuguTableBody v-else />
 			</div>
 			<!-- 控制区域 -->
 			<GuguTableControl />
@@ -35,7 +43,18 @@ import GuguTableHead from './gugu-table-head.vue';
 import GuguTableControl from './gugu-table-control.vue';
 import GuguTableBody from './gugu-table-body.vue';
 
-const { isShowControlDrawer, getFollowsInfoListProgress, isLocalHasFollowsInfo } = useGugu();
+const { isShowControlDrawer, getFollowsInfoListProgress, isLocalHasFollowsInfo, isLoading } = useGugu();
+
+const svg = `
+        <path class="path" d="
+          M 30 15
+          L 28 17
+          M 25.61 25.61
+          A 15 15, 0, 0, 1, 15 30
+          A 15 15, 0, 1, 1, 27.99 7.5
+          L 15 15
+        " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
+      `;
 </script>
 
 <style lang="less">
@@ -55,9 +74,10 @@ const { isShowControlDrawer, getFollowsInfoListProgress, isLocalHasFollowsInfo }
 		align-items: center;
 		justify-content: center;
 		flex-direction: column;
+		color: #bbbbbb;
+
 		&__text {
 			margin-bottom: 30px;
-			color: #bbbbbb;
 		}
 		&__progress {
 			width: 72%;
