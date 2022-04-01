@@ -1,14 +1,19 @@
 
 import { UpGugu, VideoInfo } from '../type';
 import databaseFactory from '../../database/index';
-import { getTimeDiff } from '../common/index';
+import { getMyMid, getTimeDiff } from '../common/index';
 import SpaceGugu from '../../components/gugu-page/up-space/space-gugu.vue';
 import { createApp, ref } from 'vue';
 import { useGugu } from './../useGugu';
+import { UpInfo } from '../api/up';
 
 const Database = databaseFactory();
 const { getGuguDetails } = useGugu(); 
 export const isOpen = ref<boolean>(false);
+
+export const getIsLogin = () => {
+    return !!getMyMid()
+}
 
 enum IsOpenState {
     True = 'true',
@@ -29,6 +34,20 @@ export const changIsOpen = (isOpen: boolean): void => {
     localStorage.setItem('is_open', IsOpenState.False);
 };
 
+// 当前页面 up 主的咕咕信息,用于查看进度条和显示数据
+export const upGugu = ref<UpGugu>({
+    mid: 0, 
+    uname: '',
+    face: '',
+    mtime: 0, // -1 表示未关注，0 表示当前没有获取关注列表，其余就表示关注事件
+    currentGuguLength:undefined,
+    averageGuguLength:undefined,
+    maxGuguLength:undefined,
+    videosNum: -1,
+    currentHaveVideosNum: -1,
+    guguLengthList: [],
+})
+
 // 组件刚刚加载完的时候运行
 export const onPageOpen = () => {
     // 页面发生变化的时候触发 onLoad 事件
@@ -38,14 +57,57 @@ export const onPageOpen = () => {
     const localIsOpen = Boolean(localStorage.getItem('is_open'));
     // 获取本地 isOpen 状态
     isOpen.value = localIsOpen;
+
+    // 给个人空间页增加头部 dom
     addGuguDom();
+
+    initCurrentUpInfo();
 
     if (isOpen.value) {
         onLoad();
     }
 }
+
+// 完善当前 up 主的 ref 信息
+const initCurrentUpInfo = async () => {
+    // 当前页面的 up 主的 id
+    const upMid = getUpMid();
+    upGugu.value.mid = Number(upMid);
+
+    // 获得我的 mid
+    const myMid = getMyMid();
+
+    if (upMid === myMid) {
+        return;
+    }
+    
+    // 获得我在本地记录的关注的 up 主列表信息
+    const myLocalFollowsList: UpInfo[] = await Database.localStore.followsInfoList.getItem(myMid);
+
+    if (!myLocalFollowsList) {
+        return;
+    }
+
+    const currentUpInfo = myLocalFollowsList.find(follow => follow.mid === Number(upMid));
+
+    if (!currentUpInfo) {
+        upGugu.value.mtime = -1;
+        return;
+    }
+
+    Object.assign(upGugu.value, currentUpInfo);
+}
+
 const addGuguDom = () => {
     const dom = document.querySelector('.h-gradient');
+    // 如果页面还没加载出来
+    if (!dom) {
+        setTimeout(() => {
+            console.log('页面还没加载')
+            addGuguDom();
+        }, 100);
+        return;
+    }
     const newElement =document.createElement('div');
     newElement.id = 'space-gugu';
     dom.append(newElement);
@@ -129,28 +191,13 @@ const removeVideosListListener = () => {
     }
 }
 
-// 当前页面 up 主的咕咕信息,用于查看进度条和显示数据
-export const upGugu = ref<UpGugu>({
-    mid: 0, 
-    uname: '',
-    face: '',
-    mtime: 0,
-    currentGuguLength:undefined,
-    averageGuguLength:undefined,
-    maxGuguLength:undefined,
-    videosNum: -1,
-    currentHaveVideosNum: -1,
-    guguLengthList: [],
-})
-
 // 刷新咕咕数据
 export const onLoad = async () => {
     removeGuguTag();
     // 查看本地是否有 up 主 的 gugu 数据
     removeVideosListListener();
-    const upMid = getUpMid();
-    upGugu.value.mid = Number(upMid);
-    const localVideosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(upMid);
+    const mid = String(upGugu.value.mid)
+    const localVideosList: VideoInfo[] = await Database.localStore.videosListStore.getItem(mid);
     if (localVideosList) {
         // 把每个视频的 拖更时间 插入到 dom 中
         // 把三个 gugu 数据展示到页面上

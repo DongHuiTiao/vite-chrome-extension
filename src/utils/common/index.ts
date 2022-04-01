@@ -151,3 +151,10 @@ export const getTimeDiff = (timeLength: number) => {
 
 	return `${day}天${remainHour}小时${remainMinute}分${remianSecond}秒`;
 };
+
+export const formatDateToChinese = (timestamp: number) => {
+	const time = new Date(timestamp * 1000);
+	return `${time.getFullYear()}年${
+		time.getMonth() + 1
+	}月${time.getDate()}日${time.getHours()}点${time.getMinutes()}分`;
+};

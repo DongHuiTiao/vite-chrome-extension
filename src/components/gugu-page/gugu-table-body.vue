@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import { useGugu } from '../../utils/useGugu';
-import { getTimeDiff } from '../../utils/common/index';
+import { getTimeDiff, formatDateToChinese } from '../../utils/common/index';
 import { Delete, Refresh, Download, CircleClose, Bottom } from '@element-plus/icons-vue';
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 import { computed } from 'vue';
@@ -166,13 +166,6 @@ const getProgress = (currentNum: number, videosNum: number) => {
 	}
 
 	return Number(((currentNum / videosNum) * 100).toFixed(2));
-};
-
-const formatDateToChinese = (timestamp: number) => {
-	const time = new Date(timestamp * 1000);
-	return `${time.getFullYear()}年${
-		time.getMonth() + 1
-	}月${time.getDate()}日${time.getHours()}点${time.getMinutes()}分`;
 };
 
 // 跳转到 up 主的页面

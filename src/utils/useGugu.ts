@@ -113,6 +113,7 @@ const initGugu = () => {
         isLocalHasFollowsInfo.value = false;
         const followsInfoList = await getAllFollowsInfoList();
         await donefollowsGuguInfo(followsInfoList);
+        currentHaveFollowsInfoNum.value = 0;
     }
 
     // 完成关注列表的处理

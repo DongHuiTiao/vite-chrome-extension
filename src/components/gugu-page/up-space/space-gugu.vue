@@ -1,9 +1,15 @@
 <template>
 	<div class="space-gugu">
 		<!-- 是否开启功能的开关 -->
-		<div class="space-gugu__switch">
-			<div class="space-gugu__switch__label">是否展示咕咕数据</div>
-			<el-switch v-model="isOpen" @change="changIsOpen"></el-switch>
+		<div class="space-gugu__left">
+			<div class="space-gugu__switch">
+				<div class="space-gugu__switch__label">是否展示咕咕数据</div>
+				<el-switch v-model="isOpen" @change="changIsOpen"></el-switch>
+			</div>
+			<div v-if="upGugu.mtime">
+				<div v-if="upGugu.mtime === -1">没有关注这个 up 主</div>
+				<div v-if="upGugu.mtime > 0">关注时间: {{ formatDateToChinese(upGugu.mtime) }}</div>
+			</div>
 		</div>
 		<!-- 展示数据区域 -->
 		<div v-if="isOpen" class="space-gugu__body">
@@ -78,18 +84,17 @@
 				</template>
 			</el-popconfirm>
 		</div>
-		<!-- TODO 未登录要拦截 -->
 		<!-- 展开所有 up 主信息的面板 -->
 		<div class="space-gugu__all-btn">
-			<el-button size="small" @click="open">查看关注 up 主咕咕信息</el-button>
+			<el-button size="small" @click="open">打开关注的 up 主列表</el-button>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { isOpen, changIsOpen, upGugu, onLoad, removeGuguTag } from '../../../utils/up-space-gugu/index';
+import { isOpen, changIsOpen, upGugu, onLoad, removeGuguTag, getIsLogin } from '../../../utils/up-space-gugu/index';
 import { Download, Refresh, CircleClose, Delete } from '@element-plus/icons-vue';
-import { getTimeDiff } from '../../../utils/common';
+import { getTimeDiff, formatDateToChinese } from '../../../utils/common';
 import { useGugu } from '../../../utils/useGugu';
 import { ElMessage } from 'element-plus';
 
@@ -127,6 +132,10 @@ const getProgress = (currentNum: number, videosNum: number) => {
 
 // 打开遮罩层
 const open = async () => {
+	if (!getIsLogin()) {
+		ElMessage.error('还未登录哦, 无法获取关注列表, 先登录吧');
+		return;
+	}
 	const activeGuguExtensionId = localStorage.getItem('active_gugu_extension_id');
 	if (!activeGuguExtensionId) {
 		localStorage.setItem('active_gugu_extension_id', guguExtensionId);
@@ -153,6 +162,14 @@ const open = async () => {
 	color: white;
 	transition: width 2s;
 	background-color: #00000080;
+
+	&__left {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-around;
+		height: 100%;
+	}
+
 	&__body {
 		margin-left: 33px;
 		width: 300px;
@@ -163,7 +180,6 @@ const open = async () => {
 	}
 
 	&__switch {
-		height: 100%;
 		display: flex;
 		align-items: center;
 		user-select: none;
