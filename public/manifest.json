@@ -1,8 +1,8 @@
 {
-    "name": "up-gugu-list",
+    "name": "up主拖更数据查看器 - 冬灰条开发",
     "version": "1.0.0",
     "manifest_version": 2,
-    "description": "获取 up 主的咕咕信息",
+    "description": "该插件用于获取 up 主的咕咕信息,可以在 up 主个人空间查看",
     "permissions": [
         "https://space.bilibili.com/*"
     ],
