@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { OneGroupVideoInfo, OneGroupVideoInfoCode } from '../type';
+import requestQueueFactory from '../../request-queue/index'; 
+
+const RequestQueue = requestQueueFactory();
 
 axios.defaults.withCredentials=true;
 export interface UpInfo {
@@ -9,19 +12,32 @@ export interface UpInfo {
 	mtime: number;
 }
 // 获得我关注的人
-export const getOneGroupFollows = async (mid: number, currentPage: number): Promise<UpInfo[]> => {
+const getOneGroupFollowsAxios = async (mid: number, currentPage: number): Promise<UpInfo[]> => {
     const res = await axios.get(`https://api.bilibili.com/x/relation/followings?vmid=${mid}&pn=${currentPage}&ps=50&order=desc`)
     return res.data.data.list
 }
 
+export const getOneGroupFollows = (mid: number, currentPage: number): Promise<UpInfo[]> => {
+    return RequestQueue.reaquest(
+		() => getOneGroupFollowsAxios(mid, currentPage)
+	)
+}
+
 // 获取up主所有视频数量
-export const getUpVideosNum = async (mid: number): Promise<number> => {
+const getUpVideosNumAxios = async (mid: number): Promise<number> => {
 	const res = await axios.get(`https://api.bilibili.com/x/space/navnum?mid=${mid}`);
 	return res.data.data.video;
 };
 
+export const getUpVideosNum = (mid: number): Promise<number> => {
+	return RequestQueue.reaquest<number>(
+		() => getUpVideosNumAxios(mid)
+	)
+}
+
+
 // 获取一组视频信息的接口
-export const getOneGroupUpVideoInfo = async (mid: number, page: number, pageSize: number = 50): Promise<OneGroupVideoInfo>  => {
+const getOneGroupUpVideoInfoAxios = async (mid: number, page: number, pageSize: number = 50): Promise<OneGroupVideoInfo>  => {
     const res = await axios.get(`https://api.bilibili.com/x/space/arc/search?mid=${mid}&ps=${pageSize}&tid=0&pn=${page}&keyword=&order=pubdate&jsonp=jsonp`);
 	const result: OneGroupVideoInfo = {
 		code: res.data.code,
@@ -35,15 +51,33 @@ export const getOneGroupUpVideoInfo = async (mid: number, page: number, pageSize
 	return result;
 }
 
+export const getOneGroupUpVideoInfo = (mid: number, page: number, pageSize: number = 50): Promise<OneGroupVideoInfo>  => {
+    return RequestQueue.reaquest<OneGroupVideoInfo>(
+		() => getOneGroupUpVideoInfoAxios(mid, page)
+	)
+}
+
 // 获得up自己的个人信息
-export const getMyInfo = async (mid: string): Promise<any> => {
+export const getMyInfoAxios = async (mid: string): Promise<any> => {
 	const res = await axios.get(`https://api.bilibili.com/x/space/acc/info?mid=${mid}`);
 	return res.data.data;
 }
 
+export const getMyInfo = (mid: string): Promise<any> => {
+	return RequestQueue.reaquest(
+		() => getMyInfoAxios(mid)
+	)
+}
+
 // 获取 up 主关注了多少人
-export const getMyFollowsNum = async (mid: string): Promise<any> => {
+const getMyFollowsNumAxios = async (mid: string): Promise<number> => {
 	const res = await axios.get(`https://api.bilibili.com/x/relation/stat?vmid=${mid}`);
 	return res.data.data.following;
+}
+
+export const getMyFollowsNum = (mid: string): Promise<number> => {
+	return RequestQueue.reaquest<number>(
+		() =>getMyFollowsNumAxios(mid)
+	)
 }
 

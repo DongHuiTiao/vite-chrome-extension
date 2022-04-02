@@ -8,12 +8,11 @@ import {
     getMyFollowsNum,
 } from './api/up';
 import databaseFactory from './../database/index';
-import requestQueueFactory from './../request-queue/index'; 
 import { getMyMid } from './common';
-import { VideoInfo, UpGugu, GuguLength, OneGroupVideoInfo, OneGroupVideoInfoCode } from './type';
+import { VideoInfo, UpGugu, GuguLength, OneGroupVideoInfoCode } from './type';
 import { ElMessage } from 'element-plus';
 const Database = databaseFactory();
-const RequestQueue = requestQueueFactory();
+
 
 const initGugu = () => {
     // 获取当前 b 站用户 的 登录 mid
@@ -74,9 +73,7 @@ const initGugu = () => {
 
     // 获得我关注的 up 的 头像 昵称 Id
     const getAllFollowsInfoList = async (): Promise<UpInfo[]> => {
-        myFollowsInfoNums.value = await RequestQueue.reaquest<number>(
-            () => getMyFollowsNum(myMid)
-        );
+        myFollowsInfoNums.value = await getMyFollowsNum(myMid)
 
         const followsInfoList = [];
         // 每次获取到的列表的长度
@@ -85,9 +82,7 @@ const initGugu = () => {
         let currentPage = 1;
         // 开始不断地获取 up 主列表
         while (resultLength !== 0) {
-            const oneGroupFollowsInfo = await RequestQueue.reaquest<UpInfo[]>(
-                () => getOneGroupFollows(Number(myMid), currentPage)
-            )
+            const oneGroupFollowsInfo = await getOneGroupFollows(Number(myMid), currentPage)
             followsInfoList.push(...oneGroupFollowsInfo);
             currentHaveFollowsInfoNum.value = followsInfoList.length;
             resultLength = oneGroupFollowsInfo.length;
@@ -178,9 +173,7 @@ const initGugu = () => {
     const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<Result>  => {
         // 获取 up 主制作的视频的数量
         let videosList = [];
-        const num = await RequestQueue.reaquest<number>(
-           () => getUpVideosNum(mid),
-        )
+        const num = await getUpVideosNum(mid);
         guguRef.videosNum = num;
         // 如果没有视频的话，直接返回空数组
         if (!num) {
@@ -222,9 +215,7 @@ const initGugu = () => {
             }
 
             // 获取一批 up 主的视频信息，每组上限 50 个
-            const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
-                () => getOneGroupUpVideoInfo(Number(mid), currentPage)
-            );
+            const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage)
             if (code === OneGroupVideoInfoCode.Abnormal) {
                 continue;
             }
@@ -259,9 +250,7 @@ const initGugu = () => {
                     isChange
                 };
             }
-            const { code, newList } = await RequestQueue.reaquest<OneGroupVideoInfo>(
-                () => getOneGroupUpVideoInfo(Number(mid), currentPage)
-            );
+            const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage)
             
             if (code === OneGroupVideoInfoCode.Abnormal) {
                 newVideosList.push('error');
@@ -369,6 +358,7 @@ const initGugu = () => {
     const isScrollToHandlingDom = ref<boolean>(false);
     // 批量获取剩余 up 主的咕咕信息
     const batchFetchRemainGugu = async () => {
+        // 过滤出剩余没有获取数据的 up 主 数组
         const remainGuguList = followsGuguList.value.filter(up => {
             return up.videosNum === -1;
         });
@@ -382,10 +372,12 @@ const initGugu = () => {
         // 调整状态
         isBatchRequesting.value = 'batchFetchRemainGugu';
         fetchMode.value = 'batch';
-        // 获得剩余的 up 主
-        currentDoneRemainNum.value = 0;
 
+        // 共需要获取多少个 up 主
         remainGuguListLength.value = remainGuguList.length;
+
+        // 当前已获取了多少个 up 主
+        currentDoneRemainNum.value = 0;
 
         // 逐个的获取 up 主信息
         for(let upGugu of remainGuguList) {
@@ -406,6 +398,8 @@ const initGugu = () => {
         isSingleRequesting.value = false;
         remainGuguListLength.value = -1;
         currentDoneRemainNum.value = 0;
+        isScrollToHandlingDom.value = false;
+        ElMessage.success('已完成全部 up 主的数据获取')
     }
 
     // 批量刷新已获取的 up 主的咕咕信息
