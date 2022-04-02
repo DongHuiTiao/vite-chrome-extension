@@ -5,6 +5,7 @@
 		:class="{ 'gugu-table-head__item--hover': isShowHover }"
 		@mouseover="isHover = true"
 		@mouseleave="isHover = false"
+		@click="onHeadItemClick"
 	>
 		<div
 			class="gugu-table-head__item__gripper gugu-table-head__item__gripper__left"
@@ -40,17 +41,30 @@ import { Bottom, Top } from '@element-plus/icons-vue';
 
 const { sortType, sortOrder } = useGugu();
 
+type SortType = 'mtime' | 'currentGuguLength' | 'averageGuguLength' | 'maxGuguLength' | 'videosNum';
+
+interface IProps {
+	head?: SortType;
+}
+
 // eslint-disable-next-line no-undef
-const props = defineProps({
-	head: {
-		type: String,
-		default: '',
-	},
-});
+const props = defineProps<IProps>();
 
 const isSortByThis = computed(() => {
 	return sortType.value === props.head;
 });
+
+const availSortType = ['mtime', 'currentGuguLength', 'averageGuguLength', 'maxGuguLength', 'videosNum'];
+const onHeadItemClick = () => {
+	if (!availSortType.includes(props.head)) {
+		return;
+	}
+	if (sortType.value === props.head) {
+		sortOrder.value = !sortOrder.value;
+		return;
+	}
+	sortType.value = props.head;
+};
 
 const isHover = ref<boolean>(false);
 

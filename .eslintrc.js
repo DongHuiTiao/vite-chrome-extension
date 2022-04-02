@@ -24,5 +24,6 @@ module.exports = {
 				trailingComma: 'es5',
 			},
 		],
+		'vue/valid-define-props': 'off',
 	},
 };
