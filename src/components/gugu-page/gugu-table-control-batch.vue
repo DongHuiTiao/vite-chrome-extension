@@ -15,7 +15,7 @@
 		<!-- 进度区域 -->
 		<div v-else>
 			<div class="gugu-table__drawer__batch-operate">
-				<el-button type="danger" size="small" @click="stopBatch">终止获取</el-button>
+				<el-button type="danger" size="small" @click="handleBatch(CancelType.StopBatch)">终止获取</el-button>
 			</div>
 			<div class="gugu-table__drawer__batch-operate">
 				<span style="margin-right: 8px">是否跟踪</span>
@@ -48,8 +48,8 @@
 
 <script setup lang="ts">
 import { computed } from '@vue/reactivity';
+import { CancelType } from '../../request-queue/type';
 import { useGugu } from '../../utils/useGugu';
-
 const {
 	isBatchRequesting,
 	batchFetchRemainGugu,
@@ -61,6 +61,7 @@ const {
 	isScrollToHandlingDom,
 	scrollToHandlingDom,
 	handlingMid,
+	handleBatch,
 } = useGugu();
 
 const onChange = (isOpen: boolean) => {
@@ -68,12 +69,6 @@ const onChange = (isOpen: boolean) => {
 	if (isOpen) {
 		scrollToHandlingDom(handlingMid.value);
 	}
-};
-
-// 停止批量操作
-const stopBatch = () => {
-	isBatchRequesting.value = '';
-	isScrollToHandlingDom.value = false;
 };
 
 const batchType = computed(() => {

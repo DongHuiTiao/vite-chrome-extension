@@ -12,33 +12,43 @@ export interface UpInfo {
 	mtime: number;
 }
 // 获得我关注的人
-const getOneGroupFollowsAxios = async (mid: number, currentPage: number): Promise<UpInfo[]> => {
-    const res = await axios.get(`https://api.bilibili.com/x/relation/followings?vmid=${mid}&pn=${currentPage}&ps=50&order=desc`)
+const getOneGroupFollowsAxios = async (mid: number, currentPage: number, controller: AbortController): Promise<UpInfo[]> => {
+    const res = await axios.get(`https://api.bilibili.com/x/relation/followings?vmid=${mid}&pn=${currentPage}&ps=50&order=desc`,{
+		signal: controller.signal
+	})
     return res.data.data.list
 }
 
 export const getOneGroupFollows = (mid: number, currentPage: number): Promise<UpInfo[]> => {
-    return RequestQueue.reaquest(
-		() => getOneGroupFollowsAxios(mid, currentPage)
+	const controller = new AbortController();
+    return RequestQueue.request(
+		() => getOneGroupFollowsAxios(mid, currentPage, controller),
+		controller
 	)
 }
 
 // 获取up主所有视频数量
-const getUpVideosNumAxios = async (mid: number): Promise<number> => {
-	const res = await axios.get(`https://api.bilibili.com/x/space/navnum?mid=${mid}`);
+const getUpVideosNumAxios = async (mid: number, controller: AbortController): Promise<number> => {
+	const res = await axios.get(`https://api.bilibili.com/x/space/navnum?mid=${mid}`, {
+		signal: controller.signal
+	});
 	return res.data.data.video;
 };
 
 export const getUpVideosNum = (mid: number): Promise<number> => {
-	return RequestQueue.reaquest<number>(
-		() => getUpVideosNumAxios(mid)
+	const controller = new AbortController();
+	return RequestQueue.request<number>(
+		() => getUpVideosNumAxios(mid, controller),
+		controller
 	)
 }
 
 
 // 获取一组视频信息的接口
-const getOneGroupUpVideoInfoAxios = async (mid: number, page: number, pageSize: number = 50): Promise<OneGroupVideoInfo>  => {
-    const res = await axios.get(`https://api.bilibili.com/x/space/arc/search?mid=${mid}&ps=${pageSize}&tid=0&pn=${page}&keyword=&order=pubdate&jsonp=jsonp`);
+const getOneGroupUpVideoInfoAxios = async (mid: number, page: number, pageSize: number = 50, controller: AbortController): Promise<OneGroupVideoInfo>  => {
+    const res = await axios.get(`https://api.bilibili.com/x/space/arc/search?mid=${mid}&ps=${pageSize}&tid=0&pn=${page}&keyword=&order=pubdate&jsonp=jsonp`, {
+		signal: controller.signal
+	});
 	const result: OneGroupVideoInfo = {
 		code: res.data.code,
 		newList: []
@@ -52,32 +62,42 @@ const getOneGroupUpVideoInfoAxios = async (mid: number, page: number, pageSize: 
 }
 
 export const getOneGroupUpVideoInfo = (mid: number, page: number, pageSize: number = 50): Promise<OneGroupVideoInfo>  => {
-    return RequestQueue.reaquest<OneGroupVideoInfo>(
-		() => getOneGroupUpVideoInfoAxios(mid, page)
+    const controller = new AbortController();
+	return RequestQueue.request<OneGroupVideoInfo>(
+		() => getOneGroupUpVideoInfoAxios(mid, page, pageSize, controller),
+		controller
 	)
 }
 
 // 获得up自己的个人信息
-export const getMyInfoAxios = async (mid: string): Promise<any> => {
-	const res = await axios.get(`https://api.bilibili.com/x/space/acc/info?mid=${mid}`);
+export const getMyInfoAxios = async (mid: string, controller: AbortController): Promise<any> => {
+	const res = await axios.get(`https://api.bilibili.com/x/space/acc/info?mid=${mid}`, {
+		signal: controller.signal
+	});
 	return res.data.data;
 }
 
 export const getMyInfo = (mid: string): Promise<any> => {
-	return RequestQueue.reaquest(
-		() => getMyInfoAxios(mid)
+	const controller = new AbortController()
+	return RequestQueue.request(
+		() => getMyInfoAxios(mid, controller),
+		controller
 	)
 }
 
 // 获取 up 主关注了多少人
-const getMyFollowsNumAxios = async (mid: string): Promise<number> => {
-	const res = await axios.get(`https://api.bilibili.com/x/relation/stat?vmid=${mid}`);
+const getMyFollowsNumAxios = async (mid: string, controller: AbortController): Promise<number> => {
+	const res = await axios.get(`https://api.bilibili.com/x/relation/stat?vmid=${mid}`, {
+		signal: controller.signal
+	});
 	return res.data.data.following;
 }
 
 export const getMyFollowsNum = (mid: string): Promise<number> => {
-	return RequestQueue.reaquest<number>(
-		() =>getMyFollowsNumAxios(mid)
+	const controller = new AbortController()
+	return RequestQueue.request<number>(
+		() => getMyFollowsNumAxios(mid, controller),
+		controller
 	)
 }
 

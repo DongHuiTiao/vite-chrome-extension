@@ -100,7 +100,13 @@
 					content="跳过这个 up 主, 计算下一个 up 主"
 					placement="top"
 				>
-					<el-button type="primary" :icon="Bottom" circle size="small" @click.stop="isNext = true" />
+					<el-button
+						type="primary"
+						:icon="Bottom"
+						circle
+						size="small"
+						@click.stop="handleBatch(CancelType.NextBatch)"
+					/>
 				</el-tooltip>
 				<!-- 删除按钮 -->
 				<el-popconfirm v-else title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
@@ -120,7 +126,7 @@ import { Delete, Refresh, Download, CircleClose, Bottom } from '@element-plus/ic
 import { guguHeadsMap } from '../../utils/drag-width/gugu-table';
 import { computed } from 'vue';
 import { ElMessage } from 'element-plus';
-
+import { CancelType } from '../../request-queue/type';
 const {
 	deleteUpGugu,
 	refreshOneUpGugu,
@@ -129,8 +135,8 @@ const {
 	handlingMid,
 	cancelRefresh,
 	isBatchRequesting,
-	isNext,
 	isScrollToHandlingDom,
+	handleBatch,
 } = useGugu();
 
 const onMouseWheel = () => {

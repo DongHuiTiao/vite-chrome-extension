@@ -11,7 +11,11 @@ import databaseFactory from './../database/index';
 import { getMyMid } from './common';
 import { VideoInfo, UpGugu, GuguLength, OneGroupVideoInfoCode } from './type';
 import { ElMessage } from 'element-plus';
+import requestQueueFactory from '../request-queue';
+import { CancelType } from '../request-queue/type';
 const Database = databaseFactory();
+
+const RequestQueue = requestQueueFactory();
 
 
 const initGugu = () => {
@@ -191,39 +195,37 @@ const initGugu = () => {
         // 当前页数少于最多页数时，请求数据
         while (currentPage <= time) {
             // 如果批量请求被终止了 或 单个请求被终止了
-            if (
-                fetchMode.value === 'batch' && !isBatchRequesting.value ||
-                fetchMode.value === 'single' && !isSingleRequesting.value
-            ) {
-                guguRef.videosNum = -1;
-                guguRef.currentHaveVideosNum = -1;
-                return {
-                    type: 'stop',
-                    videosList: [],
-                };
+            try {
+                // 获取一批 up 主的视频信息，每组上限 50 个
+                const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage)
+                if (code === OneGroupVideoInfoCode.Abnormal) {
+                    continue;
+                }
+
+                guguRef.currentHaveVideosNum += newList.length;
+
+                videosList.push(...newList);
+                currentPage++;
+            } catch (error) {
+                if (error === CancelType.StopBatch) {
+                    guguRef.videosNum = -1;
+                    guguRef.currentHaveVideosNum = -1;
+                    return {
+                        type: 'stop',
+                        videosList: [],
+                    };
+                }
+                if (error === CancelType.NextBatch) {
+                    guguRef.videosNum = -1;
+                    guguRef.currentHaveVideosNum = -1;
+                    isNext.value = false;
+                    return {
+                        type: 'next',
+                        videosList: [],
+                    };
+                }
             }
-
-            // 如果监听到点击了下一个,则跳出当前循环
-            if (isNext.value) {
-                guguRef.videosNum = -1;
-                guguRef.currentHaveVideosNum = -1;
-                isNext.value = false;
-                return {
-                    type: 'next',
-                    videosList: [],
-                };
-            }
-
-            // 获取一批 up 主的视频信息，每组上限 50 个
-            const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage)
-            if (code === OneGroupVideoInfoCode.Abnormal) {
-                continue;
-            }
-
-            guguRef.currentHaveVideosNum += newList.length;
-
-            videosList.push(...newList);
-            currentPage++;
+            
         }
         return {
             type: 'continue',
@@ -250,24 +252,27 @@ const initGugu = () => {
                     isChange
                 };
             }
-            const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage)
-            
-            if (code === OneGroupVideoInfoCode.Abnormal) {
-                newVideosList.push('error');
-                continue;
-            }
-
-            resultLength = newList.length;
-
-            currentPage += 1;
-
-            newVideosList = newList.filter(video => {
-                return !videosIdList.includes(video.bvid);
-            });
-
-            if(newVideosList.length > 0) {
-                videosList.unshift(...newVideosList);
-                isChange = true;
+            try {
+                const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage);
+                if (code === OneGroupVideoInfoCode.Abnormal) {
+                    newVideosList.push('error');
+                    continue;
+                }
+    
+                resultLength = newList.length;
+    
+                currentPage += 1;
+    
+                newVideosList = newList.filter(video => {
+                    return !videosIdList.includes(video.bvid);
+                });
+    
+                if(newVideosList.length > 0) {
+                    videosList.unshift(...newVideosList);
+                    isChange = true;
+                }
+            } catch (error) {
+                console.log(error)
             }
         } while (resultLength !==0 && newVideosList.length > 0 );
 
@@ -288,18 +293,17 @@ const initGugu = () => {
         if (!videosList) {
             // 请求全部 videosList
             const result = await getUpAllVideosList(mid, guguRef);
-
             if (result.type === 'stop') {
                 handlingMid.value = -1;
-                return false;
-            }
-
-            if (result.type === 'next') {
                 return true;
             }
 
+            if (result.type === 'next') {
+                return false;
+            }
+
             videosList = result.videosList;
-                isVideosListChange = true;
+            isVideosListChange = true;
         }
         else {
             // 计算 followsIdList 差量
@@ -311,7 +315,7 @@ const initGugu = () => {
             
             if (!afterDiffList) {
                 handlingMid.value = -1;
-                return false;
+                return true;
             }
 
             if(isChange) {
@@ -332,7 +336,7 @@ const initGugu = () => {
         // 更新 guguRef
         Object.assign(guguRef, guguInfo);
         handlingMid.value = -1;
-        return true;
+        return false;
     }
 
     // 剩余需要获取的 up 主的数量
@@ -378,15 +382,17 @@ const initGugu = () => {
 
         // 当前已获取了多少个 up 主
         currentDoneRemainNum.value = 0;
-
+        let isStop = false;
         // 逐个的获取 up 主信息
         for(let upGugu of remainGuguList) {
             // 判断是否需要跟踪 dom
             if (isScrollToHandlingDom.value) {
                 scrollToHandlingDom(upGugu.mid);
             }
-            const isContinue = await handleOneGugu(upGugu.mid, upGugu);
-            if (!isContinue) {
+            isStop = await handleOneGugu(upGugu.mid, upGugu);
+
+            if (isStop) {
+                isStop = false;
                 // 恢复默认状态
                 fetchMode.value = 'single';
                 break;
@@ -399,7 +405,12 @@ const initGugu = () => {
         remainGuguListLength.value = -1;
         currentDoneRemainNum.value = 0;
         isScrollToHandlingDom.value = false;
-        ElMessage.success('已完成全部 up 主的数据获取')
+        if (isStop) {
+            ElMessage.warning('已终止批量获取');
+        } else {
+            ElMessage.success('已完成全部 up 主的数据的获取了');
+        }
+        
     }
 
     // 批量刷新已获取的 up 主的咕咕信息
@@ -419,13 +430,13 @@ const initGugu = () => {
         }
 
         remainGuguListLength.value = doneGuguList.length;
-
+        let isStop = false;
         for(let upGugu of doneGuguList) {
             if (isScrollToHandlingDom.value) {
                 scrollToHandlingDom(upGugu.mid);
             }
-            const isContinue = await handleOneGugu(upGugu.mid, upGugu);
-            if (!isContinue) {
+           isStop = await handleOneGugu(upGugu.mid, upGugu);
+            if (isStop) {
                 // 恢复默认状态
                 fetchMode.value = 'single';
                 break;
@@ -437,7 +448,22 @@ const initGugu = () => {
         remainGuguListLength.value = -1;
         isSingleRequesting.value = false;
         currentDoneRemainNum.value = 0;
+        if (isStop) {
+            ElMessage.warning('已终止批量刷屏');
+        } else {
+            ElMessage.success('已刷新全部 up 主的数据');
+        }
     }
+
+    // 停止批量操作
+    const handleBatch = (cancelType: CancelType) => {
+        RequestQueue.cancelRequest(cancelType);
+        if (cancelType === CancelType.StopBatch) {
+            isBatchRequesting.value = '';
+        }
+        isScrollToHandlingDom.value = false;
+    };
+
     // 视图跳转掉正在处理的 dom 上
     const scrollToHandlingDom = (mid: number) => {
         // 先获取视图区域的 dom
@@ -600,6 +626,7 @@ const initGugu = () => {
     // 取消刷新
     
     const cancelRefresh = () => {
+        // FIXME: 取消按钮失效
         isSingleRequesting.value = false;
         isBatchRequesting.value = '';
     };
@@ -690,6 +717,7 @@ const initGugu = () => {
         isBatchRequesting,
         batchFetchRemainGugu,
         batchRefreshGugu,
+        handleBatch,
         refreshFollowsGuguList,
         handlingMid,
         remainGuguListLength,
