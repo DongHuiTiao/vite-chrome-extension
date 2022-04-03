@@ -237,24 +237,24 @@ const initGugu = () => {
 
     // 获得视频列表差异
     const getVideosListDiff = async (mid: number, videosList: VideoInfo[]) => {
-        const videosIdList = videosList.map(video => video.bvid);
-        let isChange = false;
-        // 每次获取到的列表的长度
-        let resultLength = -1;
-        // 当前的页面
-        let currentPage = 1;
-        let newVideosList = [];
-        do {
-            if (
-                fetchMode.value === 'batch' && !isBatchRequesting.value ||
-                fetchMode.value === 'single' && !isSingleRequesting.value
-            ) {
-                return {
-                    videosList: undefined,
-                    isChange
-                };
-            }
-            try {
+        try {
+            const videosIdList = videosList.map(video => video.bvid);
+            let isChange = false;
+            // 每次获取到的列表的长度
+            let resultLength = -1;
+            // 当前的页面
+            let currentPage = 1;
+            let newVideosList = [];
+            do {
+                if (
+                    fetchMode.value === 'batch' && !isBatchRequesting.value ||
+                    fetchMode.value === 'single' && !isSingleRequesting.value
+                ) {
+                    return {
+                        videosList: undefined,
+                        isChange
+                    };
+                }
                 const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage);
                 if (code === OneGroupVideoInfoCode.Abnormal) {
                     newVideosList.push('error');
@@ -273,14 +273,26 @@ const initGugu = () => {
                     videosList.unshift(...newVideosList);
                     isChange = true;
                 }
-            } catch (error) {
-                console.log(error)
-            }
-        } while (resultLength !==0 && newVideosList.length > 0 );
+            } while (resultLength !==0 && newVideosList.length > 0 );
 
-        return {
-            videosList,
-            isChange
+            return {
+                videosList,
+                isChange
+            }
+        } catch (error) {
+            if (error === CancelType.StopBatch || error === CancelType.StopSingle) {
+                return {
+                    type: 'stop',
+                    videosList: [],
+                };
+            }
+            if (error === CancelType.NextBatch) {
+                isNext.value = false;
+                return {
+                    type: 'next',
+                    videosList: [],
+                };
+            }   
         }
     }
     const handlingMid = ref<number>(-1);
@@ -312,12 +324,17 @@ const initGugu = () => {
             guguRef.videosNum = videosList.length;
             const {
                 videosList: afterDiffList, 
-                isChange
+                isChange,
+                type
             } = await getVideosListDiff(mid, videosList);
             
-            if (!afterDiffList) {
+            if (type === 'stop') {
                 handlingMid.value = -1;
                 return true;
+            }
+
+            if (type === 'next') {
+                return false;
             }
 
             if(isChange) {
