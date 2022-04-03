@@ -109,7 +109,11 @@
 					/>
 				</el-tooltip>
 				<!-- 删除按钮 -->
-				<el-popconfirm v-else title="确认从本地删除该 up 主的信息吗?" @confirm="deleteUpGugu(up)">
+				<el-popconfirm
+					v-else-if="up.videosNum !== -1 && up.currentHaveVideosNum === up.videosNum"
+					title="确认从本地删除该 up 主的信息吗?"
+					@confirm="deleteUpGugu(up)"
+				>
 					<template #reference>
 						<el-button type="danger" :icon="Delete" circle size="small" />
 					</template>
