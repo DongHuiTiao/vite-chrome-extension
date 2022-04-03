@@ -175,61 +175,63 @@ const initGugu = () => {
         videosList: VideoInfo[]
     }
     const getUpAllVideosList = async (mid: number, guguRef: UpGugu): Promise<Result>  => {
-        // 获取 up 主制作的视频的数量
-        let videosList = [];
-        const num = await getUpVideosNum(mid);
-        guguRef.videosNum = num;
-        // 如果没有视频的话，直接返回空数组
-        if (!num) {
+        try {
+            // 获取 up 主制作的视频的数量
+            let videosList = [];
+            const num = await getUpVideosNum(mid);
+            guguRef.videosNum = num;
+            // 如果没有视频的话，直接返回空数组
+            if (!num) {
+                return {
+                    type: 'continue',
+                    videosList
+                }
+            };
+            guguRef.currentHaveVideosNum = 0;
+
+            // 获取的最多页数
+            const time = Math.ceil(num / 50);
+            // 当前获取的页数
+            let currentPage = 1;
+            // 当前页数少于最多页数时，请求数据
+            while (currentPage <= time) {
+                // 如果批量请求被终止了 或 单个请求被终止了
+                
+                    // 获取一批 up 主的视频信息，每组上限 50 个
+                    const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage)
+                    if (code === OneGroupVideoInfoCode.Abnormal) {
+                        continue;
+                    }
+
+                    guguRef.currentHaveVideosNum += newList.length;
+
+                    videosList.push(...newList);
+                    currentPage++;
+                
+                
+            }
             return {
                 type: 'continue',
                 videosList
             }
-        };
-        guguRef.currentHaveVideosNum = 0;
-
-        // 获取的最多页数
-        const time = Math.ceil(num / 50);
-        // 当前获取的页数
-        let currentPage = 1;
-        // 当前页数少于最多页数时，请求数据
-        while (currentPage <= time) {
-            // 如果批量请求被终止了 或 单个请求被终止了
-            try {
-                // 获取一批 up 主的视频信息，每组上限 50 个
-                const { code, newList } = await getOneGroupUpVideoInfo(Number(mid), currentPage)
-                if (code === OneGroupVideoInfoCode.Abnormal) {
-                    continue;
-                }
-
-                guguRef.currentHaveVideosNum += newList.length;
-
-                videosList.push(...newList);
-                currentPage++;
-            } catch (error) {
-                if (error === CancelType.StopBatch) {
-                    guguRef.videosNum = -1;
-                    guguRef.currentHaveVideosNum = -1;
-                    return {
-                        type: 'stop',
-                        videosList: [],
-                    };
-                }
-                if (error === CancelType.NextBatch) {
-                    guguRef.videosNum = -1;
-                    guguRef.currentHaveVideosNum = -1;
-                    isNext.value = false;
-                    return {
-                        type: 'next',
-                        videosList: [],
-                    };
-                }
+        } catch (error) {
+            if (error === CancelType.StopBatch) {
+                guguRef.videosNum = -1;
+                guguRef.currentHaveVideosNum = -1;
+                return {
+                    type: 'stop',
+                    videosList: [],
+                };
             }
-            
-        }
-        return {
-            type: 'continue',
-            videosList
+            if (error === CancelType.NextBatch) {
+                guguRef.videosNum = -1;
+                guguRef.currentHaveVideosNum = -1;
+                isNext.value = false;
+                return {
+                    type: 'next',
+                    videosList: [],
+                };
+            }
         }
     };
 
@@ -392,7 +394,6 @@ const initGugu = () => {
             isStop = await handleOneGugu(upGugu.mid, upGugu);
 
             if (isStop) {
-                isStop = false;
                 // 恢复默认状态
                 fetchMode.value = 'single';
                 break;
