@@ -215,7 +215,7 @@ const initGugu = () => {
                 videosList
             }
         } catch (error) {
-            if (error === CancelType.StopBatch) {
+            if (error === CancelType.StopBatch || error === CancelType.StopSingle) {
                 guguRef.videosNum = -1;
                 guguRef.currentHaveVideosNum = -1;
                 return {
@@ -628,6 +628,7 @@ const initGugu = () => {
     
     const cancelRefresh = () => {
         // FIXME: 取消按钮失效
+        RequestQueue.cancelRequest(CancelType.StopSingle);
         isSingleRequesting.value = false;
         isBatchRequesting.value = '';
     };
