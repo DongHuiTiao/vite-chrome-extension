@@ -409,6 +409,7 @@ const initGugu = () => {
         if (isStop) {
             ElMessage.warning('已终止批量获取');
         } else {
+            handlingMid.value = -1;
             ElMessage.success('已完成全部 up 主的数据的获取了');
         }
         
@@ -627,7 +628,6 @@ const initGugu = () => {
     // 取消刷新
     
     const cancelRefresh = () => {
-        // FIXME: 取消按钮失效
         RequestQueue.cancelRequest(CancelType.StopSingle);
         isSingleRequesting.value = false;
         isBatchRequesting.value = '';
