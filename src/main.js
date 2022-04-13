@@ -16,7 +16,5 @@ app.use(ElementPlus, {
 app.use(VueLazyload, {
 	preLoad: 1,
 	attempt: 1,
-	// error: '../public/favicon.ico',
-	// loading: '../public/favicon.ico',
 });
 app.mount(`#${id}`);

@@ -27,7 +27,7 @@ export const getOneGroupFollows = (mid: number, currentPage: number): Promise<Up
 	)
 }
 
-// 获取up主所有视频数量
+// 获取 up 主所有视频数量
 const getUpVideosNumAxios = async (mid: number, controller: AbortController): Promise<number> => {
 	const res = await axios.get(`https://api.bilibili.com/x/space/navnum?mid=${mid}`, {
 		signal: controller.signal
@@ -42,7 +42,6 @@ export const getUpVideosNum = (mid: number): Promise<number> => {
 		controller
 	)
 }
-
 
 // 获取一组视频信息的接口
 const getOneGroupUpVideoInfoAxios = async (mid: number, page: number, pageSize: number = 50, controller: AbortController): Promise<OneGroupVideoInfo>  => {

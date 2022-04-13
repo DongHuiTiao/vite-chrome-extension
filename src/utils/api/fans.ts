@@ -1,18 +1,21 @@
-import { useFetch } from '../common'; 
+import axios from 'axios';
+import requestQueueFactory from '../../request-queue/index'; 
 
-const { jsonFetch } = useFetch();
+const RequestQueue = requestQueueFactory();
 
-export const fansApi = () => {
-    // 获取一组观众数据的方法
-    const getOneGroupFansInfo = async (lastId?) => {
-        return jsonFetch(
-            lastId ? 
-                `https://member.bilibili.com/x/h5/data/fan/list?ps=500&last_id=${lastId}` :
-                'https://member.bilibili.com/x/h5/data/fan/list?ps=500'
-        )
-    }
-    return {
-        getOneGroupFansInfo
-    }
-    // 获取互动榜前十
+axios.defaults.withCredentials = true;
+// 获取 up 主关注数量
+const getUpFollowersNumAxios = async (mid: number, controller: AbortController): Promise<any> => {
+    const res = await axios.get(`https://api.bilibili.com/x/relation/stat?vmid=${mid}`,{
+		signal: controller.signal
+	})
+    return res.data.data.follower
+}
+
+export const getUpFollowersNum = (mid: number): Promise<any> => {
+	const controller = new AbortController();
+    return RequestQueue.request(
+		() => getUpFollowersNumAxios(mid, controller),
+		controller
+	)
 }

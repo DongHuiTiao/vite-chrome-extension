@@ -103,7 +103,6 @@ const addGuguDom = () => {
     // 如果页面还没加载出来
     if (!dom) {
         setTimeout(() => {
-            console.log('页面还没加载')
             addGuguDom();
         }, 100);
         return;

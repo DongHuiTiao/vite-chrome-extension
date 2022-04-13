@@ -153,6 +153,7 @@ export const getTimeDiff = (timeLength: number) => {
 };
 
 export const formatDateToChinese = (timestamp: number) => {
+	if (!timestamp) return;
 	const time = new Date(timestamp * 1000);
 	return `${time.getFullYear()}年${
 		time.getMonth() + 1

@@ -1,11 +1,25 @@
 <template>
 	<div class="entry">
-		<GuguPage />
+		<component :is="pageMap[currentPage]" />
 	</div>
 </template>
 
 <script setup>
+import { onBeforeMount, ref } from 'vue';
 import GuguPage from './views/gugu-page.vue';
+import HotPage from './views/hot-page.vue';
+
+const pageMap = {
+	'https://www.bilibili.com/v/popular/': HotPage,
+	'https://space.bilibili.com/': GuguPage,
+};
+
+const currentPage = ref('');
+
+onBeforeMount(() => {
+	const url = window.location.href;
+	currentPage.value = Object.keys(pageMap).find(item => url.startsWith(item));
+});
 </script>
 
 <style>
