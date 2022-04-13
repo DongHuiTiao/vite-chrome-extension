@@ -1,11 +1,12 @@
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import requestQueueFactory from "../../request-queue";
 import { CancelType } from "../../request-queue/type";
 import { getUpFollowersNum } from "../api/fans";
 import { getHotRankVideos } from "../api/hot";
+import { getUpInfo } from "../api/up";
 import { getOneGroupUpVideoInfo, getUpVideosNum } from "../api/video";
 const RequestQueue = requestQueueFactory();
-export type SortType = '' | 'fans' | 'videosNum' | 'createdDate';
+export type SortType = 'fans' | 'videosNum' | 'createdDate' | 'coin' | 'like' | 'favorite' | 'danmaku' | 'reply' | 'share' | 'view' | 'score';
 
 const initHot = () => {
     const hotInfosList = ref([]);
@@ -22,7 +23,7 @@ const initHot = () => {
     watch(handlingMid, (value) => {
         if (value === -1) {
             if (isScrollToHandlingDom.value) {
-                scrollToHandlingDom(hotInfosList[0].owner.mid)
+                scrollToHandlingDom(hotInfosList[0].mid)
             }
         } else {
             if (isScrollToHandlingDom.value) {
@@ -39,7 +40,30 @@ const initHot = () => {
     };
 
     const init = async () => {
-        hotInfosList.value = await getHotRankVideos();
+        const hotRankVideos = await getHotRankVideos();
+        hotInfosList.value = hotRankVideos.map((item) => {
+            return {
+                name: item.owner.name,
+                face: item.owner.face,
+                pic: item.pic,
+                sex: null,
+                title: item.title,
+                mid: item.owner.mid,
+                videosImage: item.pic,
+                videosTitle: item.title,
+                coin: item.stat.coin,
+                like: item.stat.like,
+                favorite: item.stat.favorite,
+                danmaku: item.stat.danmaku,
+                reply: item.stat.reply,
+                share: item.stat.share,
+                view: item.stat.view,
+                score: item.score,
+                fans: null,
+                videosNum: null,
+                createdDate: null,
+            }
+        })
         isLoading.value = false;
         isShowControlDrawer.value = true;
     }
@@ -52,12 +76,12 @@ const initHot = () => {
         try {
             isRequesting.value = true;
             for (const videoInfo of hotInfosList.value) {
-                handlingMid.value = videoInfo.owner.mid;
+                handlingMid.value = videoInfo.mid;
                 await updateOneHotInfo(videoInfo);
             }
             stopRequest();
+            scrollToHandlingDom(hotInfosList[0].mid)
         } catch (error) {
-            console.log(error, '???')
             if (error === CancelType.StopBatch) {
                 stopRequest();
             }
@@ -65,24 +89,26 @@ const initHot = () => {
     }
 
     const updateOneHotInfo = async (videoInfo) => {
-        videoInfo.owner.fans = await getUpFollowersNum(videoInfo.owner.mid);
-        videoInfo.owner.videosNum = await getUpVideosNum(videoInfo.owner.mid);
-        const videosGroup = await getOneGroupUpVideoInfo(videoInfo.owner.mid, videoInfo.owner.videosNum, 1);
+        videoInfo.sex = (await getUpInfo(videoInfo.mid)).sex;
+        videoInfo.fans = await getUpFollowersNum(videoInfo.mid);
+        videoInfo.videosNum = await getUpVideosNum(videoInfo.mid);
+        const videosGroup = await getOneGroupUpVideoInfo(videoInfo.mid, videoInfo.videosNum, 1);
         if (!videosGroup.newList.length) {
             return;
         }
         const createdVideo = videosGroup.newList[0];
-        videoInfo.owner.createdDate =  createdVideo.created;
+        videoInfo.createdDate =  createdVideo.created;
     }
 
     const getAllHotUpFans = async () => {
         try {
             isRequesting.value = true;
             for (const videoInfo of hotInfosList.value) {
-                handlingMid.value = videoInfo.owner.mid;
-                videoInfo.owner.fans = await getUpFollowersNum(videoInfo.owner.mid);
+                handlingMid.value = videoInfo.mid;
+                videoInfo.fans = await getUpFollowersNum(videoInfo.mid);
             }
             stopRequest();
+            scrollToHandlingDom(hotInfosList[0].mid)
         } catch (error) {
             if (error === CancelType.StopBatch) {
                 stopRequest();
@@ -94,10 +120,11 @@ const initHot = () => {
         try {
             isRequesting.value = true;
             for (const videoInfo of hotInfosList.value) {
-                handlingMid.value = videoInfo.owner.mid;
-                videoInfo.owner.videosNum = await getUpVideosNum(videoInfo.owner.mid);
+                handlingMid.value = videoInfo.mid;
+                videoInfo.videosNum = await getUpVideosNum(videoInfo.mid);
             }
             stopRequest();
+            scrollToHandlingDom(hotInfosList[0].mid)
         } catch (error) {
             if (error === CancelType.StopBatch) {
                 stopRequest();
@@ -109,15 +136,16 @@ const initHot = () => {
         try {
             isRequesting.value = true;
             for (const videoInfo of hotInfosList.value) {
-                handlingMid.value = videoInfo.owner.mid;
-                const videosGroup = await getOneGroupUpVideoInfo(videoInfo.owner.mid, videoInfo.owner.videosNum, 1);
+                handlingMid.value = videoInfo.mid;
+                const videosGroup = await getOneGroupUpVideoInfo(videoInfo.mid, videoInfo.videosNum, 1);
                 if (!videosGroup.newList.length) {
                     return;
                 }
                 const createdVideo = videosGroup.newList[0];
-                videoInfo.owner.createdDate =  createdVideo.created;
+                videoInfo.createdDate =  createdVideo.created;
             }
             stopRequest();
+            scrollToHandlingDom(hotInfosList[0].mid)
         } catch (error) {
             if (error === CancelType.StopBatch) {
                 stopRequest();
@@ -125,30 +153,59 @@ const initHot = () => {
         }
     }
 
-    const sortType = ref<SortType>('');
+    const getAllHotUpSex = async () => {
+        try {
+            isRequesting.value = true;
+            for (const videoInfo of hotInfosList.value) {
+                handlingMid.value = videoInfo.mid;
+                videoInfo.sex = (await getUpInfo(videoInfo.mid)).sex;
+            }
+            stopRequest();
+            scrollToHandlingDom(hotInfosList[0].mid)
+        } catch (error) {
+            if (error === CancelType.StopBatch) {
+                stopRequest();
+            }
+        }
+    }
+
+    const sortType = ref<SortType>('score');
     // 排列顺序
     const sortOrder = ref<boolean>(false);
+
+    const isShowMan = ref(true);
+    const isShowWoman = ref(true);
+    const isShowSecret = ref(true);
+    
 
     const showHotList = computed<any[]>(() => {
         // 过滤掉搜索的部分
         let tempList = hotInfosList.value.slice();
         const key = sortType.value;
+        
+        if (!isShowMan.value) {
+            tempList = tempList.filter(item => item.sex !== '男');
+        }
 
-        if (!key) {
-            return tempList;
+        if (!isShowWoman.value) {
+            tempList = tempList.filter(item => item.sex !== '女');
+        }
+
+        if (!isShowSecret.value) {
+            tempList = tempList.filter(item => item.sex !== '保密');
         }
 
         // 升序
         if (sortOrder.value) {
-            console.log(tempList.sort((a, b) => a.owner[key] - b.owner[key]))
-            return tempList.sort((a, b) => a.owner[key] - b.owner[key]);
+            console.log(tempList.sort((a, b) => a[key] - b[key]))
+            return tempList.sort((a, b) => a[key] - b[key]);
         }
         // 降序
-        console.log(tempList.sort((a, b) => b.owner[key] - a.owner[key]))
-        return tempList.sort((a, b) => b.owner[key] - a.owner[key]);
+        console.log(tempList.sort((a, b) => b[key] - a[key]))
+        return tempList.sort((a, b) => b[key] - a[key]);
     });
 
-        // 视图跳转掉正在处理的 dom 上
+    // 视图跳转掉正在处理的 dom 上
     const scrollToHandlingDom = (mid: number) => {
         // 先获取视图区域的 dom
         const showResultDom = document.querySelector('.hot-table__show-result');
@@ -176,6 +233,7 @@ const initHot = () => {
         getAllHotUpFans,
         getAllHotUpVideosNum,
         getAllHotUpCreatedDate,
+        getAllHotUpSex,
         isScrollToHandlingDom,
         scrollToHandlingDom,
         cancelRequest,
@@ -183,7 +241,10 @@ const initHot = () => {
         hotInfosList,
         showHotList,
         sortType,
-        sortOrder
+        sortOrder,
+        isShowMan,
+        isShowWoman,
+        isShowSecret,
     }
 }
 

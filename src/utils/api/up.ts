@@ -84,6 +84,22 @@ export const getMyInfo = (mid: string): Promise<any> => {
 	)
 }
 
+// 获得up自己的个人信息
+const getUpInfoAxios = async (mid: string, controller: AbortController): Promise<any> => {
+	const res = await axios.get(`https://api.bilibili.com/x/space/acc/info?mid=${mid}`, {
+		signal: controller.signal
+	});
+	return res.data.data;
+}
+
+export const getUpInfo = (mid: string): Promise<any> => {
+	const controller = new AbortController()
+	return RequestQueue.request(
+		() => getUpInfoAxios(mid, controller),
+		controller
+	)
+}
+
 // 获取 up 主关注了多少人
 const getMyFollowsNumAxios = async (mid: string, controller: AbortController): Promise<number> => {
 	const res = await axios.get(`https://api.bilibili.com/x/relation/stat?vmid=${mid}`, {

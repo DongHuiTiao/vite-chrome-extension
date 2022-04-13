@@ -64,7 +64,6 @@ const isSortByThis = computed(() => {
 });
 
 const onHeadItemClick = () => {
-	console.log('点击了', props.head, sortType.value);
 	if (!availSortType.includes(props.head)) {
 		return;
 	}

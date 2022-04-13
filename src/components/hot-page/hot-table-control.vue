@@ -9,10 +9,16 @@
 			<el-select v-model="sortType" class="m-2" placeholder="选择排序方式" size="small">
 				<el-option v-for="item in sortTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
 			</el-select>
-
 			<el-divider content-position="center">是否降序排序</el-divider>
 			<el-radio v-model="sortOrder" :label="false" size="large">降序</el-radio>
 			<el-radio v-model="sortOrder" :label="true" size="large">升序</el-radio>
+
+			<el-divider content-position="center">显示性别</el-divider>
+			<div>
+				<el-checkbox v-model="isShowMan" label="男" />
+				<el-checkbox v-model="isShowWoman" label="女" />
+				<el-checkbox v-model="isShowSecret" label="保密" />
+			</div>
 
 			<el-divider content-position="center">批量操作</el-divider>
 			<div v-if="isRequesting">
@@ -37,6 +43,9 @@
 				<div class="hot-table__drawer__batch-operate">
 					<el-button size="small" @click="getAllHotUpCreatedDate">获取初稿时间</el-button>
 				</div>
+				<div class="hot-table__drawer__batch-operate">
+					<el-button size="small" @click="getAllHotUpSex">获取性别</el-button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -52,17 +61,21 @@ const {
 	getAllHotUpFans,
 	getAllHotUpVideosNum,
 	getAllHotUpCreatedDate,
+	getAllHotUpSex,
 	isRequesting,
 	cancelRequest,
 	scrollToHandlingDom,
 	isScrollToHandlingDom,
 	handlingMid,
+	isShowMan,
+	isShowWoman,
+	isShowSecret,
 } = useHot();
 
 const sortTypeOptions = [
 	{
-		label: '不排序',
-		value: '',
+		label: '根据分数排序',
+		value: 'score',
 	},
 	{
 		label: '根据粉丝数量',
@@ -75,6 +88,34 @@ const sortTypeOptions = [
 	{
 		label: '根据首搞时间',
 		value: 'createdDate',
+	},
+	{
+		label: '根据投币',
+		value: 'coin',
+	},
+	{
+		label: '根据点赞',
+		value: 'like',
+	},
+	{
+		label: '根据收藏',
+		value: 'favorite',
+	},
+	{
+		label: '根据弹幕',
+		value: 'danmaku',
+	},
+	{
+		label: '根据评论',
+		value: 'reply',
+	},
+	{
+		label: '根据分享',
+		value: 'share',
+	},
+	{
+		label: '根据播放',
+		value: 'view',
 	},
 ];
 
