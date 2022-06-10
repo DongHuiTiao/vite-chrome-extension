@@ -51,6 +51,7 @@ const initHot = () => {
                 mid: item.owner.mid,
                 videosImage: item.pic,
                 videosTitle: item.title,
+                videosUrl: item.short_link,
                 coin: item.stat.coin,
                 like: item.stat.like,
                 favorite: item.stat.favorite,
@@ -182,7 +183,7 @@ const initHot = () => {
         // 过滤掉搜索的部分
         let tempList = hotInfosList.value.slice();
         const key = sortType.value;
-        
+
         if (!isShowMan.value) {
             tempList = tempList.filter(item => item.sex !== '男');
         }
@@ -197,11 +198,9 @@ const initHot = () => {
 
         // 升序
         if (sortOrder.value) {
-            console.log(tempList.sort((a, b) => a[key] - b[key]))
             return tempList.sort((a, b) => a[key] - b[key]);
         }
         // 降序
-        console.log(tempList.sort((a, b) => b[key] - a[key]))
         return tempList.sort((a, b) => b[key] - a[key]);
     });
 

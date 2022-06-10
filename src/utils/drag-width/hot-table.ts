@@ -20,7 +20,7 @@ const headsName = {
 };
 
 const headsWidth = {
-	index: 3,
+	index: 5,
 	user: 6,
 	videosImage: 12,
 	videosTitle: 10,
@@ -35,10 +35,10 @@ const headsWidth = {
 	sex: 3,
     fans: 5,
 	videosNum: 4,
-	createdDate: 15,
+	createdDate: 12,
 };
 
-const availSortType = ['fans', 'sex', 'videosNum', 'createdDate', 'coin', 'like', 'favorite', 'danmaku', 'reply', 'share', 'view', 'score'];
+const availSortType = ['fans', 'videosNum', 'createdDate', 'coin', 'like', 'favorite', 'danmaku', 'reply', 'share', 'view', 'score'];
 
 
 const init = useHead(headsWidth, 'hot-table__head');

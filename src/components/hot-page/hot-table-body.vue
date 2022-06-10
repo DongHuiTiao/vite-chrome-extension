@@ -6,6 +6,7 @@
 			:key="index"
 			class="flex align-center hot-item"
 			:class="{ loading: handlingMid === hotInfo.mid }"
+			@click="toUpPage(hotInfo.mid)"
 		>
 			<!-- 序号 -->
 			<div class="index" :style="{ width: getWidth('index') + '%' }">
@@ -21,11 +22,19 @@
 				</div>
 			</div>
 			<!-- 封面 -->
-			<div class="videos-image" :style="{ width: getWidth('videosImage') + '%' }">
+			<div
+				class="videos-image"
+				:style="{ width: getWidth('videosImage') + '%' }"
+				@click.stop="openVideo(hotInfo.videosUrl, hotInfo)"
+			>
 				<img v-lazy="hotInfo.pic" class="hot-item-pic" alt="" />
 			</div>
 			<!-- 标题 -->
-			<div class="videos-title" :style="{ width: getWidth('videosTitle') + '%' }">
+			<div
+				class="videos-title"
+				:style="{ width: getWidth('videosTitle') + '%' }"
+				@click.stop="openVideo(hotInfo.videosUrl, hotInfo)"
+			>
 				{{ hotInfo.title }}
 			</div>
 			<!-- 投币 -->
@@ -104,6 +113,14 @@ const allWidth = computed(() => {
 
 const getWidth = (props: string) => {
 	return (headsMap[props].width / allWidth.value) * 100;
+};
+
+const toUpPage = (mid: number) => {
+	window.open(`https://space.bilibili.com/${mid}`);
+};
+
+const openVideo = (url: string, hotInfo) => {
+	window.open(url);
 };
 </script>
 
